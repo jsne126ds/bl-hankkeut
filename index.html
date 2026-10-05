@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v2.9 polish */
+/* v3.0 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -272,7 +272,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v2.9</span>
+    <span class="version-badge">v3.0</span>
   </div>
 </footer>
 
@@ -588,9 +588,22 @@ function objectWeight(d,bg,themes=current.themes||[]){
 function dup(s,v,themes){const texts=[s.text,v?.text||'',...themes.map(x=>x.name)];const fam=[['익명',['익명','비밀 계정','가면']],['계약',['계약','기간 한정','조건부 만남','정기 만남']],['재회',['재회','과거','다시 만']]];return fam.some(([_,ks])=>texts.filter(t=>ks.some(k=>t.includes(k))).length>=3)}
 function settingCompatible(s,bg,rel,overlay){
   if(s.required_overlay&&overlay?.name!==s.required_overlay)return false;
+
   const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';
-  const publicRoleContext=workContext||bg.category==='학교·교육'||rel.category==='세계관·특수';
-  if([44,66,74,75,76,80].includes(s.id)&&!publicRoleContext)return false;
+  const authorityTerms=['상사','부하','팀장','인턴','대표','CEO','고용주','개인비서','교수','조교','멘토','코치','감독','선배','후배','황제','왕','황태자','왕세자','대공','귀족','사용인','주군','기사','후궁','문주','제자','장교','지휘관','참모','오너'];
+  const authorityContext=authorityTerms.some(k=>rel.name.includes(k));
+  const publicRoleContext=workContext||authorityContext;
+  const pastRomance=new Set(['전 연인','전 약혼자','이혼한 배우자','과거 계약 연인']);
+
+  // 공적 호칭은 실제 공적 역할이 있는 관계에서만.
+  if([44,80].includes(s.id)&&!publicRoleContext)return false;
+
+  // 평가·계약 갱신, 과거/현재 상하관계, 명령권·진로 결정권은 명확한 권한 관계가 필요하다.
+  if([66,74,75,76].includes(s.id)&&!authorityContext)return false;
+
+  // 이미 연애·혼인 관계였던 상대에게 '연애는 처음' 설정이 붙는 모순을 막는다.
+  if(s.id===30&&pastRomance.has(rel.name))return false;
+
   return true;
 }
 function anonymityVariableCompatible(v,rel){const t=v.text||'';const identityVariable=['본명','신분','정체를 모르','상대의 정체','익명'].some(k=>t.includes(k));if(!identityVariable)return true;const anonymityFriendly=rel.category==='낯선·익명'||['온라인 친구','게임 친구'].includes(rel.name);return anonymityFriendly}
