@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v2.3 polish */
+/* v2.4 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -271,7 +271,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v2.3</span>
+    <span class="version-badge">v2.4</span>
   </div>
 </footer>
 
@@ -534,12 +534,12 @@ if(fantasyRelAffinity[r.name]){
   if(!fantasyRelAffinity[r.name].includes(bg.name))return 0;
   w*=3.2;
 }if(selectedRel.size&&mode==='direct'&&!selectedRel.has(r.category))return 0;if(selectedBg.has('pastschool')&&mode==='direct'&&!selectedRel.size&&r.category!=='과거 학교 인연')return 0;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'){const mapped=Object.prototype.hasOwnProperty.call(industryRelMap,bg.name);const allowed=industryRelMap[bg.name]||[];if(mapped&&!allowed.includes(r.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
-function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSituation(s);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(bg.category==='판타지'&&[
+function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSituation(s);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(bg.category==='판타지'&&s.id===322)return 0;if(bg.category==='판타지'&&[
   '회사','야근','신입사원','직장','사내','출근','퇴근','출장',
   'SNS','소셜미디어','휴대폰','메신저','온라인','앱','방송','스트리밍','콘텐츠','라이브 방송',
   '엘리베이터','차량','팔로우','계정','커뮤니티','공유 기기','프로젝트','제품이나 서비스'
 ].some(k=>s.text.includes(k)))return 0;return w}
-const meaningFamilies=[['익명','비밀 계정','익명 공간'],['계약','기간 한정','조건부 만남','정기 만남'],['재회','다시 만','과거로 돌아'],['동거','같이 살','한집'],['호텔','숙소','객실'],['회사','직장','사내','업무','야근','출장'],['촬영','리허설'],['게임','내기','승부'],['돌봄','간병','보호'],['발정','히트','러트','종족 발정기']];
+const meaningFamilies=[['익명','비밀 계정','익명 공간'],['계약','기간 한정','조건부 만남','정기 만남'],['재회','다시 만','과거로 돌아'],['동거','같이 살','한집'],['호텔','숙소','객실'],['회사','직장','사내','업무','야근','출장'],['촬영','리허설'],['게임','내기','승부'],['돌봄','간병','보호'],['발정','히트','러트','종족 발정기','발정 체질'],['후각 과민','냄새로 상대 구분'],['본체 발현','변신 비밀'],['변신 불안정','인간형 유지 제한'],['촉수','비인간 신체']];
 function sharesMeaning(a,b){return meaningFamilies.some(f=>f.some(k=>a.includes(k))&&f.some(k=>b.includes(k)))}
 function themeWeight(d,bg,sit,rel,chosen){if(sharesMeaning(d.name,sit.text))return 0;if(chosen.some(x=>sharesMeaning(d.name,x.name)))return 0;let w=1;if(sharesMeaning(d.name,rel.name))w*=.12;return w}
 function objectWeight(d,bg,themes=current.themes||[]){
