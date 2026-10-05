@@ -501,7 +501,7 @@ function objectWeight(d,bg,themes=current.themes||[]){
 
   const names=new Set((themes||[]).map(x=>x.name));
   const hasSM=names.has('SM');
-  const smObjects=new Set(['안대','수갑','로프','목줄','초커','패들','크롭','케인']);
+  const smObjects=new Set(['안대','로프','목줄','초커','패들','크롭','케인']);
 
   // SM 전용 오브제는 반드시 상위 키워드 SM이 뽑힌 결과에서만 허용한다.
   if(smObjects.has(d.name)&&!hasSM)return 0;
@@ -509,20 +509,18 @@ function objectWeight(d,bg,themes=current.themes||[]){
   let w=1;
   if(bg.category==='회사·업무'&&['정장','넥타이','명찰·사원증','책상'].includes(d.name))w*=1.8;
 
-  if(hasSM){
-    const childRules={
-      '패들':['스팽킹','벌','조련','D/s'],
-      '크롭':['스팽킹','벌','조련','D/s'],
-      '케인':['스팽킹','벌','조련','D/s'],
-      '수갑':['본디지','통제','자세 지시','D/s'],
-      '로프':['본디지','통제','자세 지시','D/s'],
-      '목줄':['오너십 판타지','복종','조련','D/s'],
-      '초커':['오너십 판타지','복종','D/s'],
-      '안대':['감각 제한','통제','D/s']
-    };
-    if(smObjects.has(d.name))w*=1.25;
-    if(childRules[d.name]&&childRules[d.name].some(x=>names.has(x)))w*=2.2;
-  }
+  const childRules={
+    '패들':['스팽킹','벌','조련','D/s'],
+    '크롭':['스팽킹','벌','조련','D/s'],
+    '케인':['스팽킹','벌','조련','D/s'],
+    '수갑':['본디지','통제','자세 지시','D/s'],
+    '로프':['본디지','통제','자세 지시','D/s'],
+    '목줄':['오너십 판타지','복종','조련','D/s'],
+    '초커':['오너십 판타지','복종','D/s'],
+    '안대':['감각 제한','통제','D/s']
+  };
+  if(hasSM&&smObjects.has(d.name))w*=1.25;
+  if(childRules[d.name]&&childRules[d.name].some(x=>names.has(x)))w*=hasSM?2.2:1.6;
   return w
 }
 function dup(s,v,themes){const texts=[s.text,v?.text||'',...themes.map(x=>x.name)];const fam=[['익명',['익명','비밀 계정','가면']],['계약',['계약','기간 한정','조건부 만남','정기 만남']],['재회',['재회','과거','다시 만']]];return fam.some(([_,ks])=>texts.filter(t=>ks.some(k=>t.includes(k))).length>=3)}
