@@ -67,7 +67,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v3.1 polish */
+/* v3.2 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -292,7 +292,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.1</span>
+    <span class="version-badge">v3.2</span>
   </div>
 </footer>
 
@@ -326,7 +326,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
       </label>
     </div>
 
-    <p class="pref-note">환경 설정은 이 브라우저에만 저장돼요. 직접 선택 모드에서 지정한 세계관은 자동 혼합 설정과 별개로 적용됩니다.</p>
+    <p class="pref-note">환경 설정은 이 브라우저에만 저장되며 현재 결과는 유지돼요. 변경 사항은 다음 뽑기부터 적용됩니다. 직접 선택 모드에서 지정한 세계관은 자동 혼합 설정과 별개로 적용됩니다.</p>
     <div class="pref-actions">
       <button class="mini pref-reset" onclick="resetPreferences()">기본값으로</button>
       <button class="action pref-apply" onclick="applyPreferences()">적용하기</button>
@@ -859,12 +859,9 @@ function applyPreferences(){
   }
   initFilters();
   closePreferences();
-  fullGenerate(false);
-  showToast('환경 설정을 적용했어요.');
+  showToast('환경 설정을 저장했어요. 다음 뽑기부터 적용돼요.');
 }
 function resetPreferences(){
-  preferences={...DEFAULT_PREFS};
-  localStorage.setItem(PREF_KEY,JSON.stringify(preferences));
   $('prefSM').checked=true;$('prefNonhuman').checked=true;$('prefTentacle').checked=true;$('prefAutoWorld').checked=true;
   syncPreferenceUI();
 }
