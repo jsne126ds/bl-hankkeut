@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v1.3 polish */
+/* v1.4 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -271,7 +271,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v1.3</span>
+    <span class="version-badge">v1.4</span>
   </div>
 </footer>
 
@@ -346,6 +346,7 @@ let current={};
 const $=id=>document.getElementById(id);
 const sample=a=>a[Math.floor(Math.random()*a.length)];
 function weighted(items, fn){let ws=items.map(x=>Math.max(0,fn(x))),t=ws.reduce((a,b)=>a+b,0);if(!t)return sample(items);let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
+function weightedStrict(items,fn){const ws=items.map(x=>Math.max(0,fn(x))),t=ws.reduce((a,b)=>a+b,0);if(!t)return null;let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
 function today(){const d=new Date(); $('today').textContent='▣ '+d.getFullYear()+'. '+String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0')+' ('+'일월화수목금토'[d.getDay()]+')'}
 const worldDefs=[['전체','all'],['현대','modern'],['판타지','fantasy'],['오메가버스','오메가버스'],['가이드버스','가이드버스'],['수인/인외','수인·인외 세계'],['오컬트','오컬트·초능력 세계']];
 const bgDefs=[['전체','all'],['회사','회사'],['과거 학교 인연','pastschool'],['일상','현대·생활'],['연예계','연예계'],['병원','병원'],['황궁/귀족','fantasycourt']];
@@ -460,7 +461,7 @@ const industryRelMap={
 '보안·경호 업계':['경호원 × 보호대상','연예인 × 경호원','보안요원 × VIP 고객'],
 '조직·암흑가':['경호원 × 보호대상','의뢰인 × 전문가']
 };
-function relWeight(r,bg){let w=1;const requiredWorld=requiredOverlayForRelation(r);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;const pureFantasyRelations=new Set(['용사 × 마왕','성기사 × 마족','마법사 × 사역마']);if(pureFantasyRelations.has(r.name)&&bg.category!=='판타지')return 0;if(selectedRel.size&&mode==='direct'&&!selectedRel.has(r.category))return 0;if(selectedBg.has('pastschool')&&mode==='direct'&&r.category!=='과거 학교 인연')return .06;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'){const allowed=industryRelMap[bg.name]||[];if(allowed.length&&!allowed.includes(r.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
+function relWeight(r,bg){let w=1;const requiredWorld=requiredOverlayForRelation(r);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;const pureFantasyRelations=new Set(['용사 × 마왕','성기사 × 마족','마법사 × 사역마']);if(pureFantasyRelations.has(r.name)&&bg.category!=='판타지')return 0;if(selectedRel.size&&mode==='direct'&&!selectedRel.has(r.category))return 0;if(selectedBg.has('pastschool')&&mode==='direct'&&!selectedRel.size&&r.category!=='과거 학교 인연')return 0;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'){const allowed=industryRelMap[bg.name]||[];if(allowed.length&&!allowed.includes(r.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
 function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSituation(s);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(bg.category==='판타지'&&['회사','야근','신입사원','직장','사내','출근','SNS','소셜미디어','휴대폰','메신저','온라인','앱','방송','스트리밍','콘텐츠','라이브 방송'].some(k=>s.text.includes(k)))return 0;return w}
 const meaningFamilies=[['익명','비밀 계정','익명 공간'],['계약','기간 한정','조건부 만남','정기 만남'],['재회','다시 만','과거로 돌아'],['동거','같이 살','한집'],['호텔','숙소','객실'],['회사','직장','사내','업무','야근','출장'],['촬영','리허설'],['게임','내기','승부'],['돌봄','간병','보호']];
 function sharesMeaning(a,b){return meaningFamilies.some(f=>f.some(k=>a.includes(k))&&f.some(k=>b.includes(k)))}
@@ -469,12 +470,56 @@ function objectWeight(d,bg){if(bg.category==='판타지'&&['정장','넥타이',
 function dup(s,v,themes){const texts=[s.text,v?.text||'',...themes.map(x=>x.name)];const fam=[['익명',['익명','비밀 계정','가면']],['계약',['계약','기간 한정','조건부 만남','정기 만남']],['재회',['재회','과거','다시 만']]];return fam.some(([_,ks])=>texts.filter(t=>ks.some(k=>t.includes(k))).length>=3)}
 function anonymityVariableCompatible(v,rel){const t=v.text||'';const identityVariable=['본명','신분','정체를 모르','상대의 정체','익명'].some(k=>t.includes(k));if(!identityVariable)return true;const anonymityFriendly=rel.category==='낯선·익명'||['온라인 친구','게임 친구'].includes(rel.name);return anonymityFriendly}
 function variableCompatible(v){return anonymityVariableCompatible(v,current.relationship)&&!dup(current.situation,v,current.themes||[])}
-function generateField(which){if(which==='background'){const bgPool=filterBackgrounds();if(!bgPool.length){showToast('선택한 옵션끼리 조합할 수 없어요. 옵션을 하나 풀어주세요.');return false;}current.background=sample(bgPool);}if(which==='relationship')current.relationship=realizeRelationship(weighted(D.relationships,r=>relWeight(r,current.background)));if(which==='situation')current.situation=weighted(D.situations,s=>sitWeight(s,current.background,current.relationship));if(which==='variable'){const compatible=D.variables.filter(variableCompatible);current.variable=sample(compatible.length?compatible:D.variables.filter(v=>anonymityVariableCompatible(v,current.relationship)))}if(which==='themes'){let pool=themePoolFor(current.overlay,current.background);let out=[];for(let i=0;i<2;i++){let choices=pool.filter(x=>!out.some(y=>y.id===x.id));let picked=weighted(choices,d=>themeWeight(d,current.background,current.situation,current.relationship,out));out.push(picked)}current.themes=out}if(which==='object')current.object=weighted(D.objects,d=>objectWeight(d,current.background))}
+function generateField(which){
+  if(which==='background'){
+    const bgPool=filterBackgrounds();
+    if(!bgPool.length){
+      showToast('선택한 옵션끼리 조합할 수 없어요. 옵션을 하나 풀어주세요.');
+      return false;
+    }
+    current.background=sample(bgPool);
+  }
 
-function splitRelationName(name){
-  if(!name || !name.includes('×')) return null;
-  const parts=name.split('×').map(s=>s.trim());
-  return parts.length===2?parts:null;
+  if(which==='relationship'){
+    const picked=mode==='direct'
+      ? weightedStrict(D.relationships,r=>relWeight(r,current.background))
+      : weighted(D.relationships,r=>relWeight(r,current.background));
+    if(!picked){
+      showToast('선택한 배경·관계 조합을 만들 수 없어요. 옵션을 하나 풀어주세요.');
+      return false;
+    }
+    current.relationship=realizeRelationship(picked);
+  }
+
+  if(which==='situation'){
+    const picked=mode==='direct'
+      ? weightedStrict(D.situations,s=>sitWeight(s,current.background,current.relationship))
+      : weighted(D.situations,s=>sitWeight(s,current.background,current.relationship));
+    if(!picked){
+      showToast('선택한 조건에 맞는 상황이 없어요. 옵션을 하나 풀어주세요.');
+      return false;
+    }
+    current.situation=picked;
+  }
+
+  if(which==='variable'){
+    const compatible=D.variables.filter(variableCompatible);
+    const fallback=D.variables.filter(v=>anonymityVariableCompatible(v,current.relationship));
+    current.variable=sample(compatible.length?compatible:fallback);
+  }
+
+  if(which==='themes'){
+    let pool=themePoolFor(current.overlay,current.background);
+    let out=[];
+    for(let i=0;i<2;i++){
+      let choices=pool.filter(x=>!out.some(y=>y.id===x.id));
+      let picked=weighted(choices,d=>themeWeight(d,current.background,current.situation,current.relationship,out));
+      out.push(picked);
+    }
+    current.themes=out;
+  }
+
+  if(which==='object')current.object=weighted(D.objects,d=>objectWeight(d,current.background));
 }
 function relationCanFlip(rel){
   if(!rel || !rel.name || !rel.name.includes('×')) return false;
@@ -494,7 +539,18 @@ function realizeRelationship(rel){
   };
 }
 
-function fullGenerate(respectLocks=true){const backgroundChanges=!respectLocks||!locks.background;if(backgroundChanges&&generateField('background')===false)return;if(!respectLocks||!locks.relationship)generateField('relationship');if(!respectLocks||!locks.situation)generateField('situation');if(backgroundChanges)current.overlay=chooseOverlay(current.relationship,current.situation);if(!respectLocks||!locks.themes)generateField('themes');if(!respectLocks||!locks.variable)generateField('variable');if(!respectLocks||!locks.object)generateField('object');render();pushRecent()}
+function fullGenerate(respectLocks=true){
+    const backgroundChanges=!respectLocks||!locks.background;
+    if(backgroundChanges&&generateField('background')===false)return;
+    if((!respectLocks||!locks.relationship)&&generateField('relationship')===false)return;
+    if((!respectLocks||!locks.situation)&&generateField('situation')===false)return;
+    if(backgroundChanges)current.overlay=chooseOverlay(current.relationship,current.situation);
+    if(!respectLocks||!locks.themes)generateField('themes');
+    if(!respectLocks||!locks.variable)generateField('variable');
+    if(!respectLocks||!locks.object)generateField('object');
+    render();
+    pushRecent();
+  }
 function rerollUnlocked(){fullGenerate(true)}
 function rerollOnly(f){if(locks[f]){showToast('잠금된 항목이에요. 잠금을 풀어주세요.');return}if(generateField(f)===false)return;if((f==='background'||f==='relationship'||f==='situation')&&!locks.background){current.overlay=chooseOverlay(current.relationship,current.situation);if(!locks.themes)generateField('themes')}render();pushRecent()}
 function toggleLock(f){locks[f]=!locks[f];renderLocks();if(f==='situation')showToast(locks[f]?'상황을 고정했어요.':'상황 고정을 해제했어요.')}
