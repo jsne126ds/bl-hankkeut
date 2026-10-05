@@ -108,6 +108,59 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   .site-footer{width:calc(100% - 36px);align-items:flex-start;flex-direction:column}
 }
 
+
+/* Galaxy Tab S7 landscape tuning: keep desktop 3-column layout centered */
+@media (min-width:1201px) and (max-width:1300px) {
+  .shell{
+    width:100%;
+    max-width:1280px;
+    margin:0 auto;
+    padding:18px 20px 28px;
+  }
+  header{
+    padding-left:4px;
+    padding-right:4px;
+  }
+  .brand{
+    width:520px;
+    max-width:44vw;
+  }
+  .head-right{
+    gap:18px;
+  }
+  .quote{
+    max-width:165px;
+    padding:9px 12px;
+  }
+  .grid{
+    grid-template-columns:290px minmax(0,1fr) 270px;
+    gap:14px;
+    justify-content:center;
+  }
+  .left,.right{
+    padding:18px;
+  }
+  .center{
+    padding:18px 18px 16px;
+  }
+  .row{
+    grid-template-columns:32px 78px minmax(0,1fr) 38px;
+  }
+  .value{
+    padding:12px 14px;
+    min-width:0;
+  }
+  .situation .value{
+    font-size:20px;
+  }
+  .site-footer{
+    width:calc(100% - 40px);
+    max-width:1240px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
+
 </style>
 </head>
 <body>
