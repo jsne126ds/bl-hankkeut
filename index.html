@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v2.1 polish */
+/* v2.2 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -271,7 +271,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v2.1</span>
+    <span class="version-badge">v2.2</span>
   </div>
 </footer>
 
@@ -448,7 +448,7 @@ function chooseOverlay(rel,sit){
 function themePoolFor(overlay,bg){
   let generic=D.adult_themes.filter(x=>x.category!=='세계관형'&&x.category!=='SM 하위');
   const world=D.adult_themes.filter(x=>x.category==='세계관형');
-  const fantasyModern=new Set(['회사 밖 역할 전환','출장','야근','호텔','클럽','촬영·리허설','비밀 계정']);
+  const fantasyModern=new Set(['회사 밖 역할 전환','출장','야근','호텔','클럽','촬영·리허설','비밀 계정','오피스 플레이','차 안 플레이','샤워 플레이']);
   const schoolModern=new Set(['회사 밖 역할 전환','야근']);
   const travelModern=new Set(['회사 밖 역할 전환','야근']);
 
@@ -532,7 +532,7 @@ function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSitua
   'SNS','소셜미디어','휴대폰','메신저','온라인','앱','방송','스트리밍','콘텐츠','라이브 방송',
   '엘리베이터','차량','팔로우','계정','커뮤니티','공유 기기','프로젝트','제품이나 서비스'
 ].some(k=>s.text.includes(k)))return 0;return w}
-const meaningFamilies=[['익명','비밀 계정','익명 공간'],['계약','기간 한정','조건부 만남','정기 만남'],['재회','다시 만','과거로 돌아'],['동거','같이 살','한집'],['호텔','숙소','객실'],['회사','직장','사내','업무','야근','출장'],['촬영','리허설'],['게임','내기','승부'],['돌봄','간병','보호']];
+const meaningFamilies=[['익명','비밀 계정','익명 공간'],['계약','기간 한정','조건부 만남','정기 만남'],['재회','다시 만','과거로 돌아'],['동거','같이 살','한집'],['호텔','숙소','객실'],['회사','직장','사내','업무','야근','출장'],['촬영','리허설'],['게임','내기','승부'],['돌봄','간병','보호'],['발정','히트','러트','수인 발정기']];
 function sharesMeaning(a,b){return meaningFamilies.some(f=>f.some(k=>a.includes(k))&&f.some(k=>b.includes(k)))}
 function themeWeight(d,bg,sit,rel,chosen){if(sharesMeaning(d.name,sit.text))return 0;if(chosen.some(x=>sharesMeaning(d.name,x.name)))return 0;let w=1;if(sharesMeaning(d.name,rel.name))w*=.12;return w}
 function objectWeight(d,bg,themes=current.themes||[]){
