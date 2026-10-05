@@ -469,7 +469,16 @@ function themeWeight(d,bg,sit,rel,chosen){if(sharesMeaning(d.name,sit.text))retu
 function objectWeight(d,bg){if(bg.category==='판타지'&&['정장','넥타이','휴대폰','태블릿·체크리스트','명찰·사원증','카메라','타이머'].includes(d.name))return 0;let w=1;if(bg.category==='회사·업무'&&['정장','넥타이','명찰·사원증','책상'].includes(d.name))w*=1.8;return w}
 function dup(s,v,themes){const texts=[s.text,v?.text||'',...themes.map(x=>x.name)];const fam=[['익명',['익명','비밀 계정','가면']],['계약',['계약','기간 한정','조건부 만남','정기 만남']],['재회',['재회','과거','다시 만']]];return fam.some(([_,ks])=>texts.filter(t=>ks.some(k=>t.includes(k))).length>=3)}
 function anonymityVariableCompatible(v,rel){const t=v.text||'';const identityVariable=['본명','신분','정체를 모르','상대의 정체','익명'].some(k=>t.includes(k));if(!identityVariable)return true;const anonymityFriendly=rel.category==='낯선·익명'||['온라인 친구','게임 친구'].includes(rel.name);return anonymityFriendly}
-function variableCompatible(v){return anonymityVariableCompatible(v,current.relationship)&&!dup(current.situation,v,current.themes||[])}
+function variableContextCompatible(v,bg,rel){
+  const workplaceSpecific=new Set([127,137,167,193]);
+  const modernCommunication=new Set([105]);
+  const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';
+  if(workplaceSpecific.has(v.id)&&!workContext)return false;
+  if(bg.category==='판타지'&&workplaceSpecific.has(v.id))return false;
+  if(bg.category==='판타지'&&modernCommunication.has(v.id))return false;
+  return true;
+}
+function variableCompatible(v){return anonymityVariableCompatible(v,current.relationship)&&variableContextCompatible(v,current.background,current.relationship)&&!dup(current.situation,v,current.themes||[])};
 function generateField(which){
   if(which==='background'){
     const bgPool=filterBackgrounds();
@@ -504,7 +513,7 @@ function generateField(which){
 
   if(which==='variable'){
     const compatible=D.variables.filter(variableCompatible);
-    const fallback=D.variables.filter(v=>anonymityVariableCompatible(v,current.relationship));
+    const fallback=D.variables.filter(v=>anonymityVariableCompatible(v,current.relationship)&&variableContextCompatible(v,current.background,current.relationship));
     current.variable=sample(compatible.length?compatible:fallback);
   }
 
