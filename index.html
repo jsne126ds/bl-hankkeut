@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v2.5 polish */
+/* v2.6 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -271,7 +271,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v2.5</span>
+    <span class="version-badge">v2.6</span>
   </div>
 </footer>
 
@@ -587,11 +587,31 @@ function dup(s,v,themes){const texts=[s.text,v?.text||'',...themes.map(x=>x.name
 function anonymityVariableCompatible(v,rel){const t=v.text||'';const identityVariable=['본명','신분','정체를 모르','상대의 정체','익명'].some(k=>t.includes(k));if(!identityVariable)return true;const anonymityFriendly=rel.category==='낯선·익명'||['온라인 친구','게임 친구'].includes(rel.name);return anonymityFriendly}
 function variableContextCompatible(v,bg,rel){
   const workplaceSpecific=new Set([127,137,167,193]);
-  const modernCommunication=new Set([105]);
+  const institutionalSpecific=new Set([33]);
+  const modernCommunication=new Set([105,242]);
+  const worldReaction=new Set([249,250,251,252,253,254,255,256,257,258,259,260]);
+  const instinctWorld=new Set([249,252]);
+  const mateWorld=new Set([253]);
+  const compatibilityWorld=new Set([251]);
+  const imprintWorld=new Set([256]);
+  const speciesOrAbilityWorld=new Set([259]);
+
   const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';
+  const schoolContext=bg.category==='학교·교육'||rel.category==='과거 학교 인연';
+  const overlayName=current.overlay?.name||null;
+  const hasWorldContext=!!overlayName||bg.category==='판타지';
+
   if(workplaceSpecific.has(v.id)&&!workContext)return false;
-  if(bg.category==='판타지'&&workplaceSpecific.has(v.id))return false;
-  if(bg.category==='판타지'&&modernCommunication.has(v.id))return false;
+  if(institutionalSpecific.has(v.id)&&!(workContext||schoolContext))return false;
+  if(bg.category==='판타지'&&(workplaceSpecific.has(v.id)||institutionalSpecific.has(v.id)||modernCommunication.has(v.id)))return false;
+
+  if(worldReaction.has(v.id)&&!hasWorldContext)return false;
+  if(instinctWorld.has(v.id)&&!['오메가버스','수인·인외 세계'].includes(overlayName))return false;
+  if(mateWorld.has(v.id)&&overlayName!=='수인·인외 세계')return false;
+  if(compatibilityWorld.has(v.id)&&!['가이드버스','오메가버스'].includes(overlayName))return false;
+  if(imprintWorld.has(v.id)&&!['오메가버스','수인·인외 세계','오컬트·초능력 세계'].includes(overlayName)&&bg.category!=='판타지')return false;
+  if(speciesOrAbilityWorld.has(v.id)&&!['수인·인외 세계','가이드버스','오컬트·초능력 세계'].includes(overlayName)&&bg.category!=='판타지')return false;
+
   return true;
 }
 function variableCompatible(v){return anonymityVariableCompatible(v,current.relationship)&&variableContextCompatible(v,current.background,current.relationship)&&!dup(current.situation,v,current.themes||[])};
