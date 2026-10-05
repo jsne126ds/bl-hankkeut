@@ -161,6 +161,37 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   }
 }
 
+
+/* Generic tablet: keep the existing layout behavior, but center the whole content area */
+@media (min-width:901px) and (max-width:1200px) {
+  .shell{
+    width:100%;
+    max-width:1120px;
+    margin-left:auto;
+    margin-right:auto;
+    padding-left:24px;
+    padding-right:24px;
+  }
+  header{
+    width:100%;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .grid{
+    width:100%;
+    max-width:1080px;
+    margin-left:auto;
+    margin-right:auto;
+    justify-content:center;
+  }
+  .site-footer{
+    width:calc(100% - 48px);
+    max-width:1080px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
+
 </style>
 </head>
 <body>
