@@ -47,7 +47,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v1.2 polish */
+/* v1.3 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -271,7 +271,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v1.2</span>
+    <span class="version-badge">v1.3</span>
   </div>
 </footer>
 
@@ -352,8 +352,40 @@ const bgDefs=[['전체','all'],['회사','회사'],['과거 학교 인연','past
 const relCats=[...new Set(D.relationships.map(x=>x.category))];
 function renderFilter(container,defs,set,type){$ (container).innerHTML=defs.map(([label,key])=>`<button class="chip ${set.has(key)?'active':''}" onclick="toggleFilter('${type}','${key}')">${label}</button>`).join('')}
 function initFilters(){renderFilter('worldChips',worldDefs,selectedWorld,'world');renderFilter('bgChips',bgDefs,selectedBg,'bg');$('relChips').innerHTML=relCats.map(c=>`<button class="chip ${selectedRel.has(c)?'active':''}" onclick="toggleFilter('rel','${c}')">${c}</button>`).join('')}
-function setMode(m){mode=m;$('modeRandom').classList.toggle('active',m==='random');$('modeDirect').classList.toggle('active',m==='direct');$('directOptions').style.opacity=m==='direct'?1:.55;$('directOptions').style.pointerEvents=m==='direct'?'auto':'none'}
-function toggleFilter(type,key){let s=type==='world'?selectedWorld:type==='bg'?selectedBg:selectedRel;if(type!=='rel'){if(key==='all'){s.clear();s.add('all')}else{s.delete('all');s.has(key)?s.delete(key):s.add(key);if(!s.size)s.add('all')}}else{s.has(key)?s.delete(key):s.add(key)}initFilters()}
+function setMode(m){
+  mode=m;
+  $('modeRandom').classList.toggle('active',m==='random');
+  $('modeDirect').classList.toggle('active',m==='direct');
+  $('directOptions').style.opacity=m==='direct'?1:.55;
+  $('directOptions').style.pointerEvents=m==='direct'?'auto':'none';
+  if(m==='direct'&&current.background){
+    fullGenerate(true);
+  }
+}
+function toggleFilter(type,key){
+  let s=type==='world'?selectedWorld:type==='bg'?selectedBg:selectedRel;
+
+  if(type!=='rel'){
+    if(key==='all'){
+      s.clear();
+      s.add('all');
+    }else{
+      s.delete('all');
+      s.delete('전체');
+      s.has(key)?s.delete(key):s.add(key);
+      if(!s.size)s.add('all');
+    }
+  }else{
+    s.has(key)?s.delete(key):s.add(key);
+  }
+
+  initFilters();
+
+  // 옵션 직접 선택 모드에서는 선택 즉시 현재 결과에 반영한다.
+  if(mode==='direct'){
+    fullGenerate(true);
+  }
+}
 function toggleDetail(){const detail=$('detail');const isOpen=detail.classList.toggle('open');$('detailArrow').textContent=isOpen?'⌃':'⌄';$('detailToggle').setAttribute('aria-expanded',String(isOpen))}
 function filterBackgrounds(){
   let arr=D.base_backgrounds;
