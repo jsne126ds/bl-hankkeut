@@ -31,6 +31,26 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 .action-title{display:flex;gap:8px;align-items:center} .big{width:100%;border:0;border-radius:13px;background:linear-gradient(135deg,#7c4cd2,#5d2aa9);color:#fff;padding:17px 12px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px;box-shadow:0 8px 20px rgba(99,51,174,.18)} .action{width:100%;border:1px solid #d9d0ec;background:white;border-radius:12px;padding:13px 10px;color:#3b3954;font-weight:700;cursor:pointer;margin-top:9px} .action:hover{background:#faf8ff} .tip{margin-top:18px;background:linear-gradient(135deg,#f8f2ff,#fff3f8);border-radius:14px;padding:16px 17px;display:flex;gap:11px;color:#605878} .tip b{display:block;color:#34324d;margin-bottom:3px} .recent{margin-top:16px;padding-top:14px;border-top:1px solid #eeeaf4} .recent-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:800} .recent-item{border:1px solid #eeeaf4;border-radius:10px;padding:9px 11px;margin-top:7px;cursor:pointer;background:#fff} .recent-item b{font-size:12px} .recent-item p{margin:3px 0 0;font-size:10px;color:#77738b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);opacity:0;background:#29263b;color:white;padding:10px 16px;border-radius:999px;font-size:12px;transition:.2s;pointer-events:none;z-index:20} .toast.show{opacity:1;transform:translateX(-50%) translateY(0)} .modal-back{position:fixed;inset:0;background:rgba(20,18,30,.28);display:none;align-items:center;justify-content:center;z-index:30} .modal-back.show{display:flex} .modal{width:min(720px,92vw);max-height:78vh;overflow:auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(20,18,30,.2)} .modal h2{font-size:19px} .saved-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px} .saved-item .s{font-size:14px;font-weight:800;margin:4px 0} .saved-actions{display:flex;gap:7px;margin-top:8px} .mini{border:1px solid #ddd7ea;background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;font-size:11px} .close{float:right;border:0;background:#f1eef8;border-radius:8px;width:32px;height:32px;cursor:pointer}
 
+.pref-modal{width:min(620px,92vw);padding:26px 28px 24px}
+.pref-modal h2{font-size:22px;margin:0 0 8px}
+.pref-intro{margin:0 0 18px;color:var(--sub);font-size:13px;line-height:1.7}
+.pref-list{border-top:1px solid #eeeaf4}
+.pref-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px 2px;border-bottom:1px solid #eeeaf4;cursor:pointer}
+.pref-row>span{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pref-row strong{font-size:14px;color:#34324d}
+.pref-row small{font-size:11px;line-height:1.55;color:#8a8797}
+.pref-row input{position:absolute;opacity:0;pointer-events:none}
+.pref-switch{position:relative;flex:0 0 44px;width:44px;height:24px;border-radius:999px;background:#ddd9e5;transition:.18s}
+.pref-switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.16);transition:.18s}
+.pref-row input:checked+.pref-switch{background:#7b53cf}
+.pref-row input:checked+.pref-switch:after{transform:translateX(20px)}
+.pref-row.muted{opacity:.45}
+.pref-note{font-size:11px;line-height:1.65;color:#8a8797;margin:15px 0 0}
+.pref-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;margin-top:18px}
+.pref-actions .pref-reset{padding:10px 14px}
+.pref-actions .pref-apply{width:auto;min-width:110px;margin:0;padding:11px 18px}
+.chip:disabled{opacity:.38;cursor:not-allowed;background:#f7f5fa}
+.chip:disabled:hover{background:#f7f5fa}
 .guide-modal{width:min(860px,92vw);padding:28px 30px 30px}
 .guide-modal h2{font-size:22px;margin:0 0 8px}
 .guide-intro{font-size:14px;line-height:1.8;color:var(--sub);margin:0 0 22px}
@@ -47,7 +67,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 
 @media(max-width:1200px){.grid{grid-template-columns:300px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.right h2,.right .desc,.right .tip,.right .recent{grid-column:1/-1}.big,.action{margin-top:0}}
 
-/* v3.0 polish */
+/* v3.1 polish */
 .head-link{cursor:pointer;user-select:none}
 .head-link:focus-visible,.action:focus-visible,.close:focus-visible,button:focus-visible{
   outline:3px solid rgba(112,85,217,.22);
@@ -223,7 +243,7 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
 <div class="shell">
 <header>
   <img class="brand" onclick="location.reload()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();location.reload();}" title="새로고침" alt="BL 한끗 — 막히는 순간, 한 끗만 더" src="data:image/png;base64,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">
-  <div class="head-right"><span class="head-link" onclick="showHelp()">▢ 이용 안내</span><span class="head-link" onclick="openSaved()">♡ 저장한 소재</span><span class="head-link" onclick="showToast('환경 설정은 MVP 이후 확장 예정이에요.')">⚙ 환경 설정</span><div class="quote">좋은 이야기는,<br>언제나 한끗에서 시작되니까.</div></div>
+  <div class="head-right"><span class="head-link" onclick="showHelp()">▢ 이용 안내</span><span class="head-link" onclick="openSaved()">♡ 저장한 소재</span><span class="head-link" onclick="openPreferences()">⚙ 환경 설정</span><div class="quote">좋은 이야기는,<br>언제나 한끗에서 시작되니까.</div></div>
 </header>
 <div class="grid">
 <aside class="panel left">
@@ -272,17 +292,53 @@ button{font-family:inherit} .shell{max-width:1580px;margin:0 auto;padding:24px 2
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.0</span>
+    <span class="version-badge">v3.1</span>
   </div>
 </footer>
 
 <div class="modal-back" id="savedModal" role="dialog" aria-modal="true" aria-labelledby="savedTitle" onclick="if(event.target===this)closeSaved()"><div class="modal"><button class="close" onclick="closeSaved()">×</button><h2 id="savedTitle">저장한 소재</h2><p class="desc">브라우저에 저장된 소재예요.</p><div id="savedList"></div></div></div>
+<div class="modal-back" id="prefModal" role="dialog" aria-modal="true" aria-labelledby="prefTitle" onclick="if(event.target===this)closePreferences()">
+  <div class="modal pref-modal">
+    <button class="close" onclick="closePreferences()" aria-label="환경 설정 닫기">×</button>
+    <h2 id="prefTitle">환경 설정</h2>
+    <p class="pref-intro">고수위 소재는 기본으로 유지하고, 취향이 크게 갈릴 수 있는 요소만 제외할 수 있어요.</p>
+
+    <div class="pref-list">
+      <label class="pref-row">
+        <span><strong>SM 소재 포함</strong><small>SM 및 관련 플레이 키워드를 결과에 포함해요.</small></span>
+        <input type="checkbox" id="prefSM">
+        <i class="pref-switch" aria-hidden="true"></i>
+      </label>
+      <label class="pref-row">
+        <span><strong>수인·인외 소재 포함</strong><small>수인, 인외, 외계인 등 비인간 관계와 세계관을 포함해요.</small></span>
+        <input type="checkbox" id="prefNonhuman">
+        <i class="pref-switch" aria-hidden="true"></i>
+      </label>
+      <label class="pref-row" id="prefTentacleRow">
+        <span><strong>촉수·비인간 신체 포함</strong><small>촉수나 비인간 신체를 직접 활용하는 소재를 포함해요.</small></span>
+        <input type="checkbox" id="prefTentacle">
+        <i class="pref-switch" aria-hidden="true"></i>
+      </label>
+      <label class="pref-row">
+        <span><strong>특수 세계관 자동 혼합</strong><small>완전 랜덤에서 오메가버스·가이드버스·인외·오컬트 세계가 자동으로 섞일 수 있어요.</small></span>
+        <input type="checkbox" id="prefAutoWorld">
+        <i class="pref-switch" aria-hidden="true"></i>
+      </label>
+    </div>
+
+    <p class="pref-note">환경 설정은 이 브라우저에만 저장돼요. 직접 선택 모드에서 지정한 세계관은 자동 혼합 설정과 별개로 적용됩니다.</p>
+    <div class="pref-actions">
+      <button class="mini pref-reset" onclick="resetPreferences()">기본값으로</button>
+      <button class="action pref-apply" onclick="applyPreferences()">적용하기</button>
+    </div>
+  </div>
+</div>
 <div class="modal-back" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" onclick="if(event.target===this)closeHelp()">
   <div class="modal guide-modal">
     <button class="close" onclick="closeHelp()" aria-label="이용 안내 닫기">×</button>
     <h2 id="helpTitle">이용 안내</h2>
     <p class="guide-intro"><strong>BL 한끗</strong>은 성인 BL 창작자를 위한 소재 발상 도구입니다.<br>
-    배경, 관계, 상황, 변수, 19금 키워드, 오브제를 조합해 창작의 시작점이 될 만한 아이디어를 제공합니다.</p>
+    배경, 관계, 설정, 상황, 변수, 19금 키워드, 오브제를 조합해 창작의 시작점이 될 만한 아이디어를 제공합니다.</p>
     <p class="guide-intro">생성되는 결과는 완성된 줄거리나 작품 설정이 아니라, <strong>작가가 자유롭게 확장할 수 있는 발상용 소재</strong>입니다. 마음에 드는 요소만 골라 사용하거나, 일부를 고정한 뒤 다시 뽑아 새로운 조합을 만들어 보세요.</p>
 
     <section class="guide-section">
@@ -345,6 +401,16 @@ let selectedRel=new Set();
 let locks={background:false,relationship:false,situation:false,variable:false,themes:false,object:false};
 let current={};
 const $=id=>document.getElementById(id);
+const PREF_KEY='blh_preferences_v1';
+const DEFAULT_PREFS={sm:true,nonhuman:true,tentacle:true,autoWorld:true};
+let preferences=loadPreferences();
+function loadPreferences(){
+  try{return {...DEFAULT_PREFS,...JSON.parse(localStorage.getItem(PREF_KEY)||'{}')}}catch(e){return {...DEFAULT_PREFS}}
+}
+function preferenceAllowsOverlay(name){
+  if(name==='수인·인외 세계'&&!preferences.nonhuman)return false;
+  return true;
+}
 const sample=a=>a[Math.floor(Math.random()*a.length)];
 function weighted(items, fn){let ws=items.map(x=>Math.max(0,fn(x))),t=ws.reduce((a,b)=>a+b,0);if(!t)return sample(items);let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
 function weightedStrict(items,fn){const ws=items.map(x=>Math.max(0,fn(x))),t=ws.reduce((a,b)=>a+b,0);if(!t)return null;let r=Math.random()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i]}return items[items.length-1]}
@@ -352,7 +418,7 @@ function today(){const d=new Date(); $('today').textContent='▣ '+d.getFullYear
 const worldDefs=[['전체','all'],['현대','modern'],['판타지','fantasy'],['오메가버스','오메가버스'],['가이드버스','가이드버스'],['수인/인외','수인·인외 세계'],['오컬트','오컬트·초능력 세계']];
 const bgDefs=[['전체','all'],['회사','회사'],['과거 학교 인연','pastschool'],['일상','현대·생활'],['연예계','연예계'],['병원','병원'],['황궁/귀족','fantasycourt']];
 const relCats=[...new Set(D.relationships.map(x=>x.category))];
-function renderFilter(container,defs,set,type){$ (container).innerHTML=defs.map(([label,key])=>`<button class="chip ${set.has(key)?'active':''}" onclick="toggleFilter('${type}','${key}')">${label}</button>`).join('')}
+function renderFilter(container,defs,set,type){$ (container).innerHTML=defs.map(([label,key])=>{const disabled=type==='world'&&key==='수인·인외 세계'&&!preferences.nonhuman;return `<button class="chip ${set.has(key)?'active':''}" ${disabled?'disabled':''} onclick="toggleFilter('${type}','${key}')">${label}</button>`}).join('')}
 function initFilters(){renderFilter('worldChips',worldDefs,selectedWorld,'world');renderFilter('bgChips',bgDefs,selectedBg,'bg');$('relChips').innerHTML=relCats.map(c=>`<button class="chip ${selectedRel.has(c)?'active':''}" onclick="toggleFilter('rel','${c}')">${c}</button>`).join('')}
 function setMode(m){
   mode=m;
@@ -433,6 +499,7 @@ function selectedOverlayNames(){
   return [...selectedWorld].filter(x=>['오메가버스','가이드버스','수인·인외 세계','오컬트·초능력 세계'].includes(x));
 }
 function overlayAllowed(name){
+  if(!preferenceAllowsOverlay(name))return false;
   if(mode!=='direct'||selectedWorld.has('all')||selectedWorld.has('전체'))return true;
   const chosen=selectedOverlayNames();
   return chosen.length?chosen.includes(name):false;
@@ -449,11 +516,14 @@ function chooseOverlay(rel,sit){
     return null;
   }
 
-  if(forced)return D.world_overlays.find(x=>x.name===forced);
-  return Math.random()<.22?sample(D.world_overlays):null;
+  if(forced&&preferenceAllowsOverlay(forced))return D.world_overlays.find(x=>x.name===forced);
+  if(!preferences.autoWorld)return null;
+  const allowedOverlays=D.world_overlays.filter(x=>preferenceAllowsOverlay(x.name));
+  return allowedOverlays.length&&Math.random()<.22?sample(allowedOverlays):null;
 }
 function themePoolFor(overlay,bg){
   let generic=D.adult_themes.filter(x=>x.category!=='세계관형'&&x.category!=='SM 하위');
+  if(!preferences.sm)generic=generic.filter(x=>x.name!=='SM');
   const world=D.adult_themes.filter(x=>x.category==='세계관형');
   const fantasyModern=new Set(['회사 밖 역할 전환','출장','야근','호텔','클럽','촬영·리허설','비밀 계정','오피스 플레이','차 안 플레이','샤워 플레이']);
   const schoolModern=new Set(['회사 밖 역할 전환','야근']);
@@ -474,7 +544,9 @@ function themePoolFor(overlay,bg){
   else if(bg.category==='판타지')allowed=['마력 보충','감각 공유','감정 공유','운명 연결','저주 해제','계약 마법','거리 제한','변신 비밀','폭주 안정'];
 
   const allowedSet=new Set(allowed);
-  return generic.concat(world.filter(x=>allowedSet.has(x.name)));
+  let worldPool=world.filter(x=>allowedSet.has(x.name));
+  if(!preferences.tentacle)worldPool=worldPool.filter(x=>!['촉수','비인간 신체'].includes(x.name));
+  return generic.concat(worldPool);
 }
 function smThemePool(){
   return D.adult_themes.filter(x=>x.category==='SM 하위');
@@ -503,7 +575,7 @@ const industryRelMap={
 '공연·음악 업계':['가수 × 프로듀서','아이돌 × 같은 그룹 멤버','아이돌 × 안무가','아이돌 × 프로듀서','가수 × 작곡가','뮤지컬 배우 × 연출가','뮤지컬 배우 × 상대 배우','안무가 × 댄서'],
 '군부·군대':['장교 × 부하 장교','지휘관 × 참모','전우','군의관 × 군인']
 }
-function relWeight(r,bg){let w=1;const requiredWorld=requiredOverlayForRelation(r);if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;const pureFantasyRelations=new Set([
+function relWeight(r,bg){let w=1;const requiredWorld=requiredOverlayForRelation(r);if(requiredWorld&&!preferenceAllowsOverlay(requiredWorld))return 0;if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;const pureFantasyRelations=new Set([
 '황제·왕 × 신하','귀족 × 사용인','주군 × 기사','용사 × 마왕','성기사 × 마족','마법사 × 사역마',
 '문주 × 제자','사형 × 사제','정파 무인 × 사파 무인','무림맹주 × 마교 교주','호위무사 × 주군',
 '황제 × 후궁','황태자 × 호위무사','왕세자 × 호위기사','대공 × 기사','마법사 × 기사','성직자 × 이단자',
@@ -535,7 +607,7 @@ if(fantasyRelAffinity[r.name]){
   if(!fantasyRelAffinity[r.name].includes(bg.name))return 0;
   w*=3.2;
 }if(selectedRel.size&&mode==='direct'&&!selectedRel.has(r.category))return 0;if(selectedBg.has('pastschool')&&mode==='direct'&&!selectedRel.size&&r.category!=='과거 학교 인연')return 0;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'){const mapped=Object.prototype.hasOwnProperty.call(industryRelMap,bg.name);const allowed=industryRelMap[bg.name]||[];if(mapped&&!allowed.includes(r.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
-function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSituation(s);const relationWorld=requiredOverlayForRelation(rel);if(relationWorld&&requiredWorld&&relationWorld!==requiredWorld)return 0;if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';if(s.category==='업무'&&!workContext)return 0;if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(s.category==='권력·신분'&&['직장·업무','세계관·특수'].includes(rel.category))w*=1.35;if(s.category==='도망·추적'&&['과거 인연','적대·경쟁'].includes(rel.category))w*=1.3;if(bg.category==='판타지'&&s.id===322)return 0;if(bg.category==='판타지'&&[
+function sitWeight(s,bg,rel){let w=1;const requiredWorld=requiredOverlayForSituation(s);const relationWorld=requiredOverlayForRelation(rel);if(!preferences.tentacle&&['촉수','비인간 신체'].some(k=>s.text.includes(k)))return 0;if(relationWorld&&requiredWorld&&relationWorld!==requiredWorld)return 0;if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';if(s.category==='업무'&&!workContext)return 0;if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(s.category==='권력·신분'&&['직장·업무','세계관·특수'].includes(rel.category))w*=1.35;if(s.category==='도망·추적'&&['과거 인연','적대·경쟁'].includes(rel.category))w*=1.3;if(bg.category==='판타지'&&s.id===322)return 0;if(bg.category==='판타지'&&[
   '회사','야근','신입사원','직장','사내','출근','퇴근','출장',
   'SNS','소셜미디어','휴대폰','메신저','메시지','채팅','온라인','앱','방송','스트리밍','콘텐츠','라이브 방송',
   '엘리베이터','차량','팔로우','계정','커뮤니티','공유 기기','프로젝트','제품이나 서비스','계약서','학창 시절','검사 결과','검사를 다시',
@@ -751,18 +823,57 @@ function cloneResult(r=current){return JSON.parse(JSON.stringify(r))}
 function pushRecent(){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');arr.unshift(cloneResult());arr=arr.slice(0,8);localStorage.setItem('blh_recent',JSON.stringify(arr));renderRecent()}
 function renderRecent(){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');$('recentList').innerHTML=arr.slice(0,3).map((r,i)=>`<div class="recent-item" onclick="loadRecent(${i})"><b>${r.background.name} · ${relationshipLabel(r)}</b><p>${r.situation.text}</p></div>`).join('')||'<div class="tiny">아직 결과가 없어요.</div>'}
 function loadRecent(i){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');if(arr[i]){current=arr[i];render();showToast('최근 결과를 불러왔어요.')}}
-function resultKey(r=current){return JSON.stringify([r.background?.id,r.overlay?.id||null,r.relationship?.id,relationshipLabel(r),r.situation?.id,r.variable?.id,(r.themes||[]).map(x=>x.id).sort(),r.object?.id])}
+function resultKey(r=current){return JSON.stringify([r.background?.id,r.overlay?.id||null,r.relationship?.id,relationshipLabel(r),r.setting?.id,r.situation?.id,r.variable?.id,(r.themes||[]).map(x=>x.id).sort(),r.object?.id])}
 function updateSaveButton(){const btn=$('saveBtn');if(!btn||!current.background)return;const arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const saved=arr.some(r=>resultKey(r)===resultKey(current));btn.classList.toggle('saved',saved);btn.textContent=saved?'♥ 저장됨':'♡ 저장하기';btn.setAttribute('aria-pressed',saved?'true':'false')}
 function saveCurrent(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const key=resultKey(current);const idx=arr.findIndex(r=>resultKey(r)===key);if(idx>=0){arr.splice(idx,1);localStorage.setItem('blh_saved',JSON.stringify(arr));updateSaveButton();showToast('저장을 해제했어요.')}else{arr.unshift(cloneResult());localStorage.setItem('blh_saved',JSON.stringify(arr.slice(0,100)));updateSaveButton();showToast('소재를 저장했어요.')}}
 function openSaved(){$('savedModal').classList.add('show');renderSaved()} function closeSaved(){$('savedModal').classList.remove('show')}
 function renderSaved(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');$('savedList').innerHTML=arr.length?arr.map((r,i)=>`<div class="saved-item"><div class="tiny">${r.background.name}${r.overlay?' · '+r.overlay.name:''} · ${relationshipLabel(r)}</div><div class="s">${r.situation.text}</div><div class="saved-actions"><button class="mini" onclick="useSaved(${i})">불러오기</button><button class="mini" onclick="deleteSaved(${i})">삭제</button></div></div>`).join(''):'<div class="desc">저장한 소재가 아직 없어요.</div>'}
 function useSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');current=arr[i];render();closeSaved();showToast('저장한 소재를 불러왔어요.')} function deleteSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');arr.splice(i,1);localStorage.setItem('blh_saved',JSON.stringify(arr));renderSaved();updateSaveButton()}
 async function copyCurrent(){try{await navigator.clipboard.writeText(resultText());showToast('결과를 복사했어요.')}catch(e){const t=document.createElement('textarea');t.value=resultText();document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast('결과를 복사했어요.')}}
-function resetAll(){locks={background:false,relationship:false,situation:false,variable:false,themes:false,object:false};selectedWorld=new Set(['전체']);selectedBg=new Set(['전체']);selectedRel=new Set();setMode('random');initFilters();fullGenerate(false);showToast('초기화했어요.')}
+function openPreferences(){
+  $('prefSM').checked=preferences.sm;
+  $('prefNonhuman').checked=preferences.nonhuman;
+  $('prefTentacle').checked=preferences.tentacle;
+  $('prefAutoWorld').checked=preferences.autoWorld;
+  syncPreferenceUI();
+  $('prefModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closePreferences(){$('prefModal').classList.remove('show');document.body.style.overflow=''}
+function syncPreferenceUI(){
+  const enabled=$('prefNonhuman').checked;
+  $('prefTentacle').disabled=!enabled;
+  $('prefTentacleRow').classList.toggle('muted',!enabled);
+}
+function applyPreferences(){
+  preferences={
+    sm:$('prefSM').checked,
+    nonhuman:$('prefNonhuman').checked,
+    tentacle:$('prefNonhuman').checked&&$('prefTentacle').checked,
+    autoWorld:$('prefAutoWorld').checked
+  };
+  localStorage.setItem(PREF_KEY,JSON.stringify(preferences));
+  if(!preferences.nonhuman){
+    selectedWorld.delete('수인·인외 세계');
+    if(!selectedWorld.size)selectedWorld.add('all');
+  }
+  initFilters();
+  closePreferences();
+  fullGenerate(false);
+  showToast('환경 설정을 적용했어요.');
+}
+function resetPreferences(){
+  preferences={...DEFAULT_PREFS};
+  localStorage.setItem(PREF_KEY,JSON.stringify(preferences));
+  $('prefSM').checked=true;$('prefNonhuman').checked=true;$('prefTentacle').checked=true;$('prefAutoWorld').checked=true;
+  syncPreferenceUI();
+}
+function resetAll(){locks={background:false,relationship:false,setting:false,situation:false,variable:false,themes:false,object:false};selectedWorld=new Set(['전체']);selectedBg=new Set(['전체']);selectedRel=new Set();setMode('random');initFilters();fullGenerate(false);showToast('초기화했어요.')}
 function showToast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1700)}
 function showHelp(){$('helpModal').classList.add('show');document.body.style.overflow='hidden'}
 function closeHelp(){$('helpModal').classList.remove('show');document.body.style.overflow=''}
 today();initFilters();fullGenerate(false);renderRecent();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHelp();closeSaved();}});
+$('prefNonhuman').addEventListener('change',syncPreferenceUI);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHelp();closeSaved();closePreferences();}});
 </script>
 </body></html>
