@@ -25,7 +25,7 @@ const SURVEY_LOCK_KEY='bl-hankkeut-hu-survey-lock-v1';
 const state={
   world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',details:new Set(),recent:[],
   locked:false,surveyLocked:false,affectionDirection:'same',leadDirection:'equal',
-  couplePoint:'',forbiddenBehavior:'',canonMaterial:'',roleSwap:false
+  jobContext:'',couplePoint:'',forbiddenBehavior:'',canonMaterial:'',roleSwap:false
 };
 
 function lockButtonState(){
@@ -64,6 +64,7 @@ function currentSurvey(){
   return {
     affectionDirection:state.affectionDirection,
     leadDirection:state.leadDirection,
+    jobContext:state.jobContext,
     couplePoint:state.couplePoint,
     forbiddenBehavior:state.forbiddenBehavior,
     canonMaterial:state.canonMaterial
@@ -105,6 +106,7 @@ function restoreLockedSettings(){
 function applySurveyState(){
   setSegment('affectionDirection',state.affectionDirection);
   setSegment('leadDirection',state.leadDirection);
+  document.getElementById('jobContext').value=state.jobContext;
   document.getElementById('couplePoint').value=state.couplePoint;
   document.getElementById('forbiddenBehavior').value=state.forbiddenBehavior;
   document.getElementById('canonMaterial').value=state.canonMaterial;
@@ -116,6 +118,7 @@ function restoreLockedSurvey(){
   if(saved){
     state.affectionDirection=saved.affectionDirection||'same';
     state.leadDirection=saved.leadDirection||'equal';
+    state.jobContext=saved.jobContext||'';
     state.couplePoint=saved.couplePoint||'';
     state.forbiddenBehavior=saved.forbiddenBehavior||'';
     state.canonMaterial=saved.canonMaterial||'';
@@ -189,7 +192,7 @@ detailWrap.addEventListener('click',e=>{
   else{state.details.add(k);b.classList.add('active');}
   saveLockedSettings();
 });
-['couplePoint','forbiddenBehavior','canonMaterial'].forEach(id=>{
+['jobContext','couplePoint','forbiddenBehavior','canonMaterial'].forEach(id=>{
   document.getElementById(id).addEventListener('input',e=>{
     state[id]=e.target.value;
     saveLockedSurvey();
@@ -280,15 +283,16 @@ function inferredCoreWeights(){
   if(rel==='결혼'){w.stableHappiness+=6;w.dailyLife+=4;w.outsiderView+=2;}
 
   const cp=state.couplePoint;
+  const jc=state.jobContext;
   const cm=state.canonMaterial;
   if(/매달|적극|표현/.test(cp)){
     if(/공/.test(cp))w.gongAffection+=3;
     if(/수/.test(cp))w.suAffection+=3;
   }
-  if(/일상|데이트|여행|식사|생활|퇴근|귀가/.test(cp+cm))w.dailyLife+=4;
-  if(/가족|친구|동료|직원|주변|회사|병원/.test(cp+cm))w.outsiderView+=3;
-  if(/아프|취하|불안|피곤|약한|울/.test(cp+cm))w.vulnerability+=4;
-  if(/결혼|동거|이사|미래|약속|진로/.test(cm))w.relationshipProgress+=3;
+  if(/일상|데이트|여행|식사|생활|퇴근|귀가|야근|당직|출장/.test(cp+jc+cm))w.dailyLife+=4;
+  if(/가족|친구|동료|직원|주변|회사|병원|학교|센터|길드|팀|상사|부하/.test(cp+jc+cm))w.outsiderView+=3;
+  if(/아프|취하|불안|피곤|약한|울|과로|밤샘|당직/.test(cp+jc+cm))w.vulnerability+=4;
+  if(/결혼|동거|이사|미래|약속|진로|이직|승진|전근|복귀/.test(jc+cm))w.relationshipProgress+=3;
   if(cm.trim())w.canonSupplement+=4;
   return w;
 }
@@ -304,8 +308,10 @@ function coreReward(){
 function textAffinity(item){
   const t=String(item.text||'');
   let s=0;
+  const jobs=keywords(state.jobContext);
   const couple=keywords(state.couplePoint);
   const canon=keywords(state.canonMaterial);
+  s+=Math.min(5,jobs.filter(k=>t.includes(k)).length)*2.2;
   s+=Math.min(4,couple.filter(k=>t.includes(k)).length)*1.5;
   s+=Math.min(4,canon.filter(k=>t.includes(k)).length)*2;
   return s;
@@ -537,7 +543,7 @@ function resetAll(){
   }
   if(!state.surveyLocked){
     state.affectionDirection='same';state.leadDirection='equal';
-    state.couplePoint='';state.forbiddenBehavior='';state.canonMaterial='';
+    state.jobContext='';state.couplePoint='';state.forbiddenBehavior='';state.canonMaterial='';
     applySurveyState();
   }
   state.recent=[];
