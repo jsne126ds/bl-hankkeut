@@ -342,10 +342,40 @@ function summary(parts){
   const payoff=String(parts.payoff?.text||'').trim();
   return applyNames([start,trigger,payoff].filter(Boolean).join(' → '));
 }
+function hasBatchim(word){
+  const chars=Array.from(String(word||'').trim());
+  const last=chars[chars.length-1]||'';
+  const code=last.charCodeAt(0);
+  if(code<0xAC00||code>0xD7A3)return null;
+  return (code-0xAC00)%28!==0;
+}
+function chooseJosa(name,particle){
+  const batchim=hasBatchim(name);
+  if(batchim===null)return particle;
+  const pairs={
+    '가':['이','가'],
+    '이':['이','가'],
+    '는':['은','는'],
+    '은':['은','는'],
+    '를':['을','를'],
+    '을':['을','를'],
+    '와':['과','와'],
+    '과':['과','와']
+  };
+  const pair=pairs[particle];
+  return pair?(batchim?pair[0]:pair[1]):particle;
+}
+function replaceRole(text,token,name){
+  const variable='가|이|는|은|를|을|와|과';
+  const re=new RegExp(token+'('+variable+')?','g');
+  return String(text??'').replace(re,(full,particle)=>{
+    return name+(particle?chooseJosa(name,particle):'');
+  });
+}
 function applyNames(text){
   const gong=document.getElementById('gong').value.trim()||'공';
   const su=document.getElementById('su').value.trim()||'수';
-  return String(text??'').replace(/\bA\b/g,gong).replace(/\bB\b/g,su);
+  return replaceRole(replaceRole(String(text??''),'A',gong),'B',su);
 }
 function row(label,text,cls=''){
   return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(applyNames(text))}</div></div>`;
