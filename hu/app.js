@@ -220,7 +220,16 @@ function keywords(text){
 }
 function forbiddenConflict(text){
   const target=String(text||'').replace(/\s+/g,' ');
-  for(const phrase of entries(state.forbiddenBehavior)){
+  const rule=state.forbiddenBehavior;
+
+  if(/질투.*통제|통제.*질투|행동.*제한|간섭/.test(rule)
+      && /(질투|소유욕).*(통제|간섭|제한|막|금지)|일정에 간섭|행동을 제한/.test(target))return true;
+  if(/휴대폰|핸드폰|폰 검사|메시지 검사/.test(rule)
+      && /휴대폰|핸드폰|메시지|연락처|통화 기록/.test(target))return true;
+  if(/공개.*싸|사람들 앞.*싸|공개석상.*싸|직장.*싸/.test(rule)
+      && /(공개|사람들 앞|직장|공식).*(싸우|다투|언성|감정적으로)/.test(target))return true;
+
+  for(const phrase of entries(rule)){
     const clean=phrase.replace(/\s+/g,' ');
     if(clean.length>=2&&target.includes(clean))return true;
     const ks=keywords(phrase);
@@ -307,13 +316,33 @@ function coreReward(){
 }
 function textAffinity(item){
   const t=String(item.text||'');
+  const jc=state.jobContext;
+  const cp=state.couplePoint;
+  const cm=state.canonMaterial;
   let s=0;
-  const jobs=keywords(state.jobContext);
-  const couple=keywords(state.couplePoint);
-  const canon=keywords(state.canonMaterial);
+
+  // 사용자가 쓴 단어가 데이터 문장과 정확히 겹칠 때의 직접 가점
+  const jobs=keywords(jc);
+  const couple=keywords(cp);
+  const canon=keywords(cm);
   s+=Math.min(5,jobs.filter(k=>t.includes(k)).length)*2.2;
   s+=Math.min(4,couple.filter(k=>t.includes(k)).length)*1.5;
   s+=Math.min(4,canon.filter(k=>t.includes(k)).length)*2;
+
+  // 직업명 자체가 달라도 업무 상황의 의미가 비슷하면 반영
+  if(/출장|당직|야근|교대|밤샘|출근|퇴근|근무|스케줄|회의/.test(jc)
+      && /업무|일정|근무|퇴근|출근|회의|출장|야근|시간이 없|바쁘/.test(t))s+=5;
+  if(/동료|직원|상사|부하|팀원|환자|고객|학생|멤버/.test(jc)
+      && /동료|직원|주변|사람들|팀|직장|회사|병원|학교|센터|길드/.test(t))s+=4;
+  if(/같은 직장|같은 회사|같은 병원|사내|직장 내|공사 구분/.test(jc+cp)
+      && /업무|직장|회사|병원|동료|직원|공식|사람들 앞|둘만 남/.test(t))s+=4;
+
+  // 관계 고유 포인트의 대표적인 의미군
+  if(/매달|먼저 표현|적극적/.test(cp)&&/붙잡|먼저|표현|찾아가|기다리|연락|보고 싶/.test(t))s+=4;
+  if(/무심|표현이 적|말이 없/.test(cp)&&/말 대신|행동|챙기|조용히|아무 말 없이/.test(t))s+=4;
+  if(/티격태격|장난|놀리/.test(cp)&&/장난|놀리|농담|티격|말다툼/.test(t))s+=4;
+  if(/공사 구분|밖에서는|남들 앞에서는/.test(cp)&&/공식|직장|사람들 앞|둘만 남|비밀/.test(t))s+=4;
+
   return s;
 }
 function rewardScore(item,core){
@@ -339,12 +368,21 @@ function coherenceScore(item,anchor){
   return s;
 }
 function dynamicRoleScore(item){
-  const actor=String(item.actor||'');
+  const t=String(item.text||'');
   let s=0;
-  if(state.affectionDirection==='gong'&&actor==='A')s+=3;
-  if(state.affectionDirection==='su'&&actor==='B')s+=3;
-  if(state.leadDirection==='gong'&&actor==='A')s+=2;
-  if(state.leadDirection==='su'&&actor==='B')s+=2;
+  const aActs=/A가|A는|A의|A에게서/.test(t);
+  const bActs=/B가|B는|B의|B에게서/.test(t);
+
+  // roleSwap이 정한 A/B 방향과 함께 사용해, 적극성·주도권이 실제 장면 주체에도 영향을 주게 한다.
+  const gongToken=state.roleSwap?'B':'A';
+  const suToken=state.roleSwap?'A':'B';
+  const gongActs=gongToken==='A'?aActs:bActs;
+  const suActs=suToken==='A'?aActs:bActs;
+
+  if(state.affectionDirection==='gong'){if(gongActs)s+=3;if(suActs&&!gongActs)s-=1;}
+  if(state.affectionDirection==='su'){if(suActs)s+=3;if(gongActs&&!suActs)s-=1;}
+  if(state.leadDirection==='gong'){if(gongActs)s+=2;}
+  if(state.leadDirection==='su'){if(suActs)s+=2;}
   return s;
 }
 function score(item,core,p,pattern,anchor){
@@ -402,6 +440,7 @@ function syntheticCanonAnchor(){
   };
 }
 function pickCoreAnchor(by,core,p,used){
+  if(core==='canonSupplement'&&state.canonMaterial.trim())return syntheticCanonAnchor();
   const fallbackPools={
     outsiderView:['payoff','outsider','turn','action'],
     dailyLife:['payoff','action','ending'],
