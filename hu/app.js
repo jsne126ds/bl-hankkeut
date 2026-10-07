@@ -196,8 +196,16 @@ function hardEligible(item,p){
   if(!inStage(item,p.relation))return false;
   if(item.canon?.requirement==='required')return false;
   if((item.requirements||[]).some(req=>!p.details.has(req)))return false;
-  if(item.cohabitation==='nonCohabitingOnly'&&p.cohabit==='yes')return false;
+
+  // 동거 중인 커플에게 "상대 집에 물건을 두기 시작한다 / 같이 살자고 한다" 같은
+  // 비동거 전제 장면이 나오지 않도록 선호값까지 하드 필터링한다.
+  if(p.cohabit==='yes'&&['nonCohabitingOnly','nonCohabitingPreferred'].includes(item.cohabitation))return false;
+  if(p.cohabit==='yes'&&/(상대의 집|B의 집|자기 집 열쇠|같이 살자|함께 살 집|집 열쇠를 건네|집에 상시로 놓|집에 자기 물건을 하나씩 두)/.test(item.text))return false;
+
+  // 공개 연애 중이면 관계를 아직 숨기거나 처음 밝히는 전제의 장면은 제외한다.
   if(item.publicity==='publicRequired'&&p.publicity!=='yes')return false;
+  if(p.publicity==='yes'&&item.publicity==='secretPreferred')return false;
+
   return true;
 }
 
@@ -293,10 +301,15 @@ function summary(parts){
   const start=trimPeriod(parts.start?.text);
   const trigger=trimPeriod(parts.trigger?.text);
   const payoff=String(parts.payoff?.text||'').trim();
-  return [start,trigger,payoff].filter(Boolean).join(' → ');
+  return applyNames([start,trigger,payoff].filter(Boolean).join(' → '));
+}
+function applyNames(text){
+  const gong=document.getElementById('gong').value.trim()||'공';
+  const su=document.getElementById('su').value.trim()||'수';
+  return String(text??'').replace(/\bA\b/g,gong).replace(/\bB\b/g,su);
 }
 function row(label,text,cls=''){
-  return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(text)}</div></div>`;
+  return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(applyNames(text))}</div></div>`;
 }
 function rewardExplanation(core){
   const top=defs
