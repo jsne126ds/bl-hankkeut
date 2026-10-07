@@ -223,16 +223,7 @@ function hardEligible(item,p){
   if(!inStage(item,p.relation))return false;
   if(item.canon?.requirement==='required')return false;
   if((item.requirements||[]).some(req=>!p.details.has(req)))return false;
-
-  // 동거 중인 커플에게 "상대 집에 물건을 두기 시작한다 / 같이 살자고 한다" 같은
-  // 비동거 전제 장면이 나오지 않도록 선호값까지 하드 필터링한다.
-  if(p.cohabit==='yes'&&['nonCohabitingOnly','nonCohabitingPreferred'].includes(item.cohabitation))return false;
-  if(p.cohabit==='yes'&&/(상대의 집|B의 집|자기 집 열쇠|같이 살자|함께 살 집|집 열쇠를 건네|집에 상시로 놓|집에 자기 물건을 하나씩 두)/.test(item.text))return false;
-
-  // 공개 연애 중이면 관계를 아직 숨기거나 처음 밝히는 전제의 장면은 제외한다.
-  if(item.publicity==='publicRequired'&&p.publicity!=='yes')return false;
-  if(p.publicity==='yes'&&item.publicity==='secretPreferred')return false;
-
+  if(settingConflict(item,p))return false;
   return true;
 }
 
