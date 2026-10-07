@@ -189,7 +189,15 @@ exclusive('world',v=>{
   renderDetails();
   saveLockedSettings();
 });
-exclusive('cohabit',v=>{state.cohabit=v;saveLockedSettings();});
+exclusive('cohabit',v=>{
+  if(document.getElementById('relation').value==='동거'&&v==='no'){
+    state.cohabit='yes';
+    setSegment('cohabit','yes');
+  }else{
+    state.cohabit=v;
+  }
+  saveLockedSettings();
+});
 exclusive('public',v=>{state.publicity=v;saveLockedSettings();});
 
 document.getElementById('sub').addEventListener('click',function(e){
@@ -346,7 +354,8 @@ function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=tru
 
   if(strictCore){
     const coreItems=eligible.filter(x=>(x.rewards?.[core]||0)>0);
-    if(coreItems.length)eligible=coreItems;
+    if(!coreItems.length)return null;
+    eligible=coreItems;
   }
 
   if(pattern){
@@ -378,10 +387,43 @@ function outsiderChance(){
   return ({1:.2,2:.35,3:.5,4:.7,5:.9})[c.priority]||.5;
 }
 
+function syntheticCanonAnchor(){
+  return {
+    id:'SAFE_CANON_ANCHOR',
+    pool:'payoff',
+    text:'본편에서 이미 나온 장면이나 약속 하나를 다른 인물의 시점에서 다시 보여 주되, 새로운 설정을 덧붙이지 않고 당시의 감정과 의미만 보완한다.',
+    grade:'S',
+    corePattern:'canonSafe',
+    rewards:{canonSupplement:5,stableHappiness:2},
+    tone:['calm'],
+    emotions:['affection'],
+    eventIntensity:1,
+    relationshipRisk:0,
+    boundaryRisk:0,
+    recentRepeatKey:'canon_safe_anchor'
+  };
+}
+function pickCoreAnchor(by,core,p,used){
+  const fallbackPools={
+    outsiderView:['payoff','outsider','turn','action'],
+    dailyLife:['payoff','action','ending'],
+    stableHappiness:['payoff','ending','action'],
+    relationshipProgress:['payoff','action','turn'],
+    canonSupplement:['payoff','action','turn','ending']
+  };
+  const poolsToTry=fallbackPools[core]||['payoff'];
+  for(const pool of poolsToTry){
+    const x=weightedPick(by[pool]||[],core,p,used,null,true,null);
+    if(x)return x;
+  }
+  if(core==='canonSupplement')return syntheticCanonAnchor();
+  return weightedPick(by.payoff||[],core,p,used,null,false,null);
+}
+
 function chooseSequence(by,core,p){
   const used=new Set();
 
-  const payoff=weightedPick(by.payoff||[],core,p,used,null,true,null);
+  const payoff=pickCoreAnchor(by,core,p,used);
   if(payoff)used.add(payoff.id);
   const pattern=payoff?.corePattern||null;
 
@@ -409,7 +451,7 @@ function chooseSequence(by,core,p){
   const firstRank=stageRank[action1?.progressionStage]||2;
   const action2=Math.random()<.3?takeAction(firstRank):null;
   const turn=take('turn');
-  const outsider=Math.random()<outsiderChance()?take('outsider'):null;
+  const outsider=payoff?.pool==='outsider'?null:(Math.random()<outsiderChance()?take('outsider'):null);
   const ending=take('ending');
   return {start,trigger,action1,action2,turn,outsider,payoff,ending};
 }
