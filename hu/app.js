@@ -211,23 +211,83 @@ function inStage(item,rel){
   const v=stageOrder[rel]??1;
   return v>=mn&&v<=mx;
 }
+function normalizeFreeText(text){
+  return String(text||'')
+    .replace(/[•●■▪︎▶︎→]+/g,' ')
+    .replace(/[|]+/g,' / ')
+    .replace(/\s*[:：]\s*/g,':')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 function entries(text){
-  return String(text||'').split(/[\n,;·/]+/).map(x=>x.trim()).filter(Boolean);
+  const raw=String(text||'')
+    .replace(/[•●■▪︎▶︎→]+/g,'\n')
+    .replace(/[|]+/g,'/');
+  return raw.split(/[\n,;·/]+/).map(x=>x.trim()).filter(Boolean);
 }
 function keywords(text){
-  const stop=new Set(['그리고','하지만','그런데','정도','모습','상대','둘이','두 사람','하는','하지','않음','없음','있음','같은','때는','에게','에서','으로']);
-  return [...new Set(String(text||'').replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(x=>x.trim()).filter(x=>x.length>=2&&!stop.has(x)))];
+  const stop=new Set([
+    '그리고','하지만','그런데','정도','모습','상대','둘이','두 사람','하는','하지','않음','없음','있음','같은','때는','에게','에서','으로',
+    '공은','수는','공이','수가','공','수','쪽','매우','조금','자주','많음','적음','느낌','성격','관계','직업','업무','변수','포인트'
+  ]);
+  return [...new Set(
+    normalizeFreeText(text)
+      .replace(/[^가-힣A-Za-z0-9\s]/g,' ')
+      .split(/\s+/)
+      .map(x=>x.trim())
+      .filter(x=>x.length>=2&&!stop.has(x))
+  )];
+}
+function analyzeFreeText(text){
+  const raw=normalizeFreeText(text);
+  const chunks=entries(text);
+  const tokens=keywords(text);
+  const has=re=>re.test(raw);
+  const concepts=new Set();
+
+  const rules=[
+    ['workBusy',/출장|당직|야근|교대|밤샘|바쁨|바빠|과로|스케줄|근무 많|일 많|콜 많/],
+    ['workTogether',/같은 직장|같은 회사|같은 병원|사내|직장 동료|같은 팀|같은 길드|같이 일|업무상 자주/],
+    ['workSeparate',/다른 직장|서로 다른 직장|업무 접점 없|직장 다름/],
+    ['publicPrivate',/공사 구분|밖에선|밖에서는|남들 앞|직장에선|회사에선|병원에선|공적인 자리/],
+    ['outsider',/동료|직원|상사|부하|팀원|환자|고객|학생|가족|친구|주변인|길드원|멤버/],
+    ['clingyGong',/(공[^\n,;/]{0,16}(매달|집착|적극|먼저|표현 많|애교|붙어))|((매달|집착|적극|먼저|애교)[^\n,;/]{0,8}공)/],
+    ['clingySu',/(수[^\n,;/]{0,16}(매달|집착|적극|먼저|표현 많|애교|붙어))|((매달|집착|적극|먼저|애교)[^\n,;/]{0,8}수)/],
+    ['reservedGong',/(공[^\n,;/]{0,16}(무심|표현 적|말 적|덤덤|절제))|((무심|덤덤|절제)[^\n,;/]{0,8}공)/],
+    ['reservedSu',/(수[^\n,;/]{0,16}(무심|표현 적|말 적|덤덤|절제))|((무심|덤덤|절제)[^\n,;/]{0,8}수)/],
+    ['banControl',/통제|행동 제한|간섭 심|감시|위치 추적|강요/],
+    ['banPhone',/휴대폰|핸드폰|폰 검사|메시지 검사|연락처 검사|통화 기록/],
+    ['banPublicFight',/공개.*싸|사람들 앞.*싸|직장.*싸|회사.*싸|병원.*싸|공개석상.*싸|언성 높/],
+    ['vulnerable',/아픔|아프|취함|취해|불안|피곤|과로|밤샘|당직|울음|우는|약한 모습|부상/],
+    ['daily',/일상|데이트|여행|식사|퇴근|귀가|주말|휴일|집안일|장보기|생활/],
+    ['future',/결혼|동거|이사|미래|약속|진로|이직|승진|전근|복귀|퇴사|유학/],
+    ['canonPeople',/직원|동료|가족|친구|형|누나|동생|상사|부하|환자|대표|전무|의사|교수/],
+    ['canonPlace',/병원|회사|집|호텔|학교|길드|센터|별장|출장지|사무실|연수원/],
+    ['canonObject',/반지|넥타이|벨트|선물|편지|사진|휴대폰|열쇠|차|옷|약속|호칭|대사/]
+  ];
+  for(const [name,re] of rules)if(has(re))concepts.add(name);
+
+  return {raw,chunks,tokens,concepts};
+}
+function subjectiveSignals(){
+  return {
+    job:analyzeFreeText(state.jobContext),
+    couple:analyzeFreeText(state.couplePoint),
+    forbidden:analyzeFreeText(state.forbiddenBehavior),
+    canon:analyzeFreeText(state.canonMaterial)
+  };
 }
 function forbiddenConflict(text){
-  const target=String(text||'').replace(/\s+/g,' ');
+  const target=normalizeFreeText(text);
   const rule=state.forbiddenBehavior;
+  const sig=analyzeFreeText(rule);
 
-  if(/질투.*통제|통제.*질투|행동.*제한|간섭/.test(rule)
-      && /(질투|소유욕).*(통제|간섭|제한|막|금지)|일정에 간섭|행동을 제한/.test(target))return true;
-  if(/휴대폰|핸드폰|폰 검사|메시지 검사/.test(rule)
-      && /휴대폰|핸드폰|메시지|연락처|통화 기록/.test(target))return true;
-  if(/공개.*싸|사람들 앞.*싸|공개석상.*싸|직장.*싸/.test(rule)
-      && /(공개|사람들 앞|직장|공식).*(싸우|다투|언성|감정적으로)/.test(target))return true;
+  if(sig.concepts.has('banControl')
+      && /(질투|소유욕|불안).*(통제|간섭|제한|막|금지|감시)|일정에 간섭|행동을 제한|위치를 확인/.test(target))return true;
+  if(sig.concepts.has('banPhone')
+      && /휴대폰|핸드폰|메시지|연락처|통화 기록|폰을 확인/.test(target))return true;
+  if(sig.concepts.has('banPublicFight')
+      && /(공개|사람들 앞|직장|회사|병원|공식).*(싸우|다투|언성|감정적으로)|언성을 높/.test(target))return true;
 
   for(const phrase of entries(rule)){
     const clean=phrase.replace(/\s+/g,' ');
@@ -291,18 +351,20 @@ function inferredCoreWeights(){
   if(rel==='동거'){w.dailyLife+=5;w.stableHappiness+=4;w.outsiderView+=2;}
   if(rel==='결혼'){w.stableHappiness+=6;w.dailyLife+=4;w.outsiderView+=2;}
 
-  const cp=state.couplePoint;
-  const jc=state.jobContext;
-  const cm=state.canonMaterial;
-  if(/매달|적극|표현/.test(cp)){
-    if(/공/.test(cp))w.gongAffection+=3;
-    if(/수/.test(cp))w.suAffection+=3;
-  }
-  if(/일상|데이트|여행|식사|생활|퇴근|귀가|야근|당직|출장/.test(cp+jc+cm))w.dailyLife+=4;
-  if(/가족|친구|동료|직원|주변|회사|병원|학교|센터|길드|팀|상사|부하/.test(cp+jc+cm))w.outsiderView+=3;
-  if(/아프|취하|불안|피곤|약한|울|과로|밤샘|당직/.test(cp+jc+cm))w.vulnerability+=4;
-  if(/결혼|동거|이사|미래|약속|진로|이직|승진|전근|복귀/.test(jc+cm))w.relationshipProgress+=3;
-  if(cm.trim())w.canonSupplement+=4;
+  const sig=subjectiveSignals();
+  const all=[sig.job,sig.couple,sig.canon];
+  const hasConcept=name=>all.some(x=>x.concepts.has(name));
+
+  if(sig.couple.concepts.has('clingyGong'))w.gongAffection+=4;
+  if(sig.couple.concepts.has('clingySu'))w.suAffection+=4;
+  if(sig.couple.concepts.has('reservedGong'))w.suAffection+=1;
+  if(sig.couple.concepts.has('reservedSu'))w.gongAffection+=1;
+
+  if(hasConcept('daily')||sig.job.concepts.has('workBusy'))w.dailyLife+=4;
+  if(hasConcept('outsider')||sig.job.concepts.has('workTogether')||sig.couple.concepts.has('publicPrivate'))w.outsiderView+=3;
+  if(hasConcept('vulnerable')||sig.job.concepts.has('workBusy'))w.vulnerability+=3;
+  if(hasConcept('future'))w.relationshipProgress+=3;
+  if(sig.canon.raw)w.canonSupplement+=4;
   return w;
 }
 function coreReward(){
@@ -316,32 +378,29 @@ function coreReward(){
 }
 function textAffinity(item){
   const t=String(item.text||'');
-  const jc=state.jobContext;
-  const cp=state.couplePoint;
-  const cm=state.canonMaterial;
+  const sig=subjectiveSignals();
   let s=0;
 
-  // 사용자가 쓴 단어가 데이터 문장과 정확히 겹칠 때의 직접 가점
-  const jobs=keywords(jc);
-  const couple=keywords(cp);
-  const canon=keywords(cm);
-  s+=Math.min(5,jobs.filter(k=>t.includes(k)).length)*2.2;
-  s+=Math.min(4,couple.filter(k=>t.includes(k)).length)*1.5;
-  s+=Math.min(4,canon.filter(k=>t.includes(k)).length)*2;
+  // 완전한 문장이 아니어도 토큰 단위로 직접 일치 가점
+  s+=Math.min(5,sig.job.tokens.filter(k=>t.includes(k)).length)*2.2;
+  s+=Math.min(4,sig.couple.tokens.filter(k=>t.includes(k)).length)*1.5;
+  s+=Math.min(4,sig.canon.tokens.filter(k=>t.includes(k)).length)*2;
 
-  // 직업명 자체가 달라도 업무 상황의 의미가 비슷하면 반영
-  if(/출장|당직|야근|교대|밤샘|출근|퇴근|근무|스케줄|회의/.test(jc)
-      && /업무|일정|근무|퇴근|출근|회의|출장|야근|시간이 없|바쁘/.test(t))s+=5;
-  if(/동료|직원|상사|부하|팀원|환자|고객|학생|멤버/.test(jc)
+  // 짧은 메모/키워드에서 뽑은 의미군을 장면 의미와 연결
+  if(sig.job.concepts.has('workBusy')
+      && /업무|일정|근무|퇴근|출근|회의|출장|야근|시간이 없|바쁘|피곤/.test(t))s+=5;
+  if(sig.job.concepts.has('outsider')
       && /동료|직원|주변|사람들|팀|직장|회사|병원|학교|센터|길드/.test(t))s+=4;
-  if(/같은 직장|같은 회사|같은 병원|사내|직장 내|공사 구분/.test(jc+cp)
+  if(sig.job.concepts.has('workTogether')
       && /업무|직장|회사|병원|동료|직원|공식|사람들 앞|둘만 남/.test(t))s+=4;
-
-  // 관계 고유 포인트의 대표적인 의미군
-  if(/매달|먼저 표현|적극적/.test(cp)&&/붙잡|먼저|표현|찾아가|기다리|연락|보고 싶/.test(t))s+=4;
-  if(/무심|표현이 적|말이 없/.test(cp)&&/말 대신|행동|챙기|조용히|아무 말 없이/.test(t))s+=4;
-  if(/티격태격|장난|놀리/.test(cp)&&/장난|놀리|농담|티격|말다툼/.test(t))s+=4;
-  if(/공사 구분|밖에서는|남들 앞에서는/.test(cp)&&/공식|직장|사람들 앞|둘만 남|비밀/.test(t))s+=4;
+  if(sig.couple.concepts.has('publicPrivate')
+      && /공식|직장|사람들 앞|둘만 남|비밀|공적인/.test(t))s+=4;
+  if(sig.couple.concepts.has('clingyGong')||sig.couple.concepts.has('clingySu'))
+      if(/붙잡|먼저|표현|찾아가|기다리|연락|보고 싶|매달/.test(t))s+=4;
+  if(sig.couple.concepts.has('reservedGong')||sig.couple.concepts.has('reservedSu'))
+      if(/말 대신|행동|챙기|조용히|아무 말 없이|덤덤/.test(t))s+=4;
+  if(sig.couple.raw.match(/티격태격|장난|놀리/)
+      && /장난|놀리|농담|티격|말다툼/.test(t))s+=4;
 
   return s;
 }
@@ -517,8 +576,37 @@ function applyNames(text){
 function row(label,text,cls=''){
   return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(applyNames(text))}</div></div>`;
 }
+function extractedPointLabels(){
+  const sig=subjectiveSignals();
+  const labels=[];
+  const push=x=>{if(x&&!labels.includes(x))labels.push(x);};
+
+  if(sig.job.concepts.has('workBusy'))push('바쁜 업무·엇갈리는 일정');
+  if(sig.job.concepts.has('workTogether'))push('같은 업무 공간');
+  if(sig.job.concepts.has('outsider'))push('직장 주변인 개입');
+  if(sig.couple.concepts.has('publicPrivate'))push('공사 구분');
+  if(sig.couple.concepts.has('clingyGong'))push('공의 적극적인 애정 표현');
+  if(sig.couple.concepts.has('clingySu'))push('수의 적극적인 애정 표현');
+  if(sig.couple.concepts.has('reservedGong'))push('표현이 적은 공');
+  if(sig.couple.concepts.has('reservedSu'))push('표현이 적은 수');
+  if(sig.canon.concepts.has('canonPeople'))push('본편 인물 재활용');
+  if(sig.canon.concepts.has('canonPlace'))push('본편 장소 재활용');
+  if(sig.canon.concepts.has('canonObject'))push('본편 오브제·대사 재활용');
+  if(sig.forbidden.concepts.has('banControl'))push('통제 행동 제외');
+  if(sig.forbidden.concepts.has('banPhone'))push('휴대폰 검사 제외');
+  if(sig.forbidden.concepts.has('banPublicFight'))push('공개적인 다툼 제외');
+
+  // 분류되지 않은 짧은 메모도 핵심 토큰으로 보조
+  if(labels.length<3){
+    for(const token of [...sig.job.tokens,...sig.couple.tokens,...sig.canon.tokens]){
+      if(labels.length>=5)break;
+      if(token.length>=2)push(token);
+    }
+  }
+  return labels.slice(0,6);
+}
 function rewardExplanation(coreLabel){
-  return `입력한 관계 단계·관계 역학·작품 고유 정보를 바탕으로 ‘${coreLabel}’ 방향이 잘 맞는 외전으로 골랐어요.`;
+  return `입력한 관계 단계·관계 역학과 주관식에서 추출한 핵심 포인트를 바탕으로 ‘${coreLabel}’ 방향이 잘 맞는 외전으로 골랐어요.`;
 }
 function decideRoleSwap(core){
   if(core==='gongAffection')return false;
@@ -549,8 +637,10 @@ async function generate(){
     const tags=[coreLabel,worldLabel,document.getElementById('relation').value];
     document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">${esc(x)}</span>`).join('');
     const scene=[parts.action1?.text,parts.action2?.text,parts.outsider?.text].filter(Boolean).join(' ');
+    const extracted=extractedPointLabels();
     const rows=[
       ['추천 외전 방향',coreLabel,'reward'],
+      ...(extracted.length?[['반영한 핵심 포인트',extracted.join(' · '),'']]:[]),
       ['에피소드 한 줄 요약',summary(parts),''],
       ['시작 상황',parts.start?.text||'두 사람이 평범한 시간을 함께 보내기 시작한다.',''],
       ['촉발 사건',parts.trigger?.text||'사소한 계기로 평소와 다른 선택을 하게 된다.',''],
