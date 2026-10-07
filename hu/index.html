@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BL 한끗 후</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css">
+<style>
+:root{--bg:#F7F6F9;--surface:#fff;--text:#292735;--sub:#666273;--muted:#96919F;--line:#E9E6ED;--p:#7048C8;--p100:#EEE8FA;--p50:#F7F4FC;--pink:#C9507E;--pink50:#FFF5F8;--pink100:#FBE8F0;--shadow:0 4px 20px rgba(41,39,53,.04);--font:"Wanted Sans Variable","Wanted Sans","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.55}.shell{max-width:1280px;margin:auto;padding:24px 24px 40px}header{height:76px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.brand{width:212px;height:66px;object-fit:contain;object-position:left center}.head-btn{border:0;background:transparent;color:var(--sub);font:inherit;cursor:pointer}.head-btn:hover{color:var(--p)}
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px}.sticky{position:sticky;top:24px}h2{font-size:22px;margin:0 0 8px;font-weight:700;letter-spacing:-.025em}h3{font-size:15px;margin:24px 0 12px}.desc{margin:0 0 18px;color:var(--sub);font-size:13px;font-weight:400;line-height:1.65}.field{margin-bottom:14px}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:600;color:var(--sub)}input,select{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 12px;font:inherit;color:var(--text);outline:none}input:focus,select:focus{border-color:#B8A5E5;box-shadow:0 0 0 3px #F0EBFA}
+.segment{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seg,.chip{border:1px solid var(--line);background:#fff;color:var(--sub);font:inherit;font-weight:600;cursor:pointer}.seg{height:40px;border-radius:10px}.seg.active,.chip.active{background:var(--p100);border-color:#D7C9EF;color:var(--p)}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{min-height:36px;border-radius:999px;padding:8px 12px}
+.eyebrow{font-size:12px;color:var(--p);font-weight:700;margin-bottom:5px}.check-list{display:grid;gap:12px}.check-card{border:1px solid #ECE9F0;border-radius:12px;padding:16px;background:#fff;transition:.15s}.check-card.enabled{background:var(--p50);border-color:#D7C9EF;box-shadow:inset 3px 0 0 var(--p)}.question{font-weight:650;line-height:1.55;margin-bottom:12px}.controls{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center}.yesno{display:grid;grid-template-columns:1fr 1fr;gap:8px}.yn{height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--sub);font:inherit;font-size:12px;font-weight:650;cursor:pointer}.yn.active{background:var(--p);border-color:var(--p);color:#fff}.priority{display:none;align-items:center;gap:8px}.check-card.enabled .priority{display:flex}.prio-wrap{display:flex;gap:5px}.prio{width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--sub);font-weight:700;cursor:pointer}.prio.active{background:var(--p);border-color:var(--p);color:#fff}.priority-text{font-size:11px;color:var(--sub)}
+.actions{display:flex;gap:10px;margin-top:22px}.primary{flex:1;height:48px;border:0;border-radius:10px;background:var(--p);color:#fff;font:inherit;font-weight:700;cursor:pointer}.primary:hover{background:#633DB6}.secondary{height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--sub);padding:0 16px;font:inherit;font-weight:650;cursor:pointer}
+.result{display:none;margin-top:24px}.result.show{display:block}.divider{height:1px;background:var(--line);margin:24px 0}.result-title{font-size:21px;font-weight:750;margin-bottom:8px}.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tag{border-radius:999px;padding:7px 10px;background:var(--p50);color:var(--p);font-size:12px;font-weight:650}.result-grid{display:grid;gap:10px}.result-row{border:1px solid #ECE9F0;border-radius:12px;padding:14px 16px}.result-row.payoff{background:var(--pink50);border-color:var(--pink100)}.result-row.reward{background:var(--p50);border-color:#E4DBF5}.result-label{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px}.payoff .result-label{color:var(--pink)}.reward .result-label{color:var(--p)}.result-text{font-size:14px;line-height:1.75}.payoff .result-text{font-size:17px;font-weight:700;line-height:1.6}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.sticky{position:static}.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+<img class="brand" alt="BL 한끗 후" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAAABCCAYAAAAv4fhGAAAHXUlEQVR4nO3ce6xUxR3A8a8iIFpELD4SbCWYwZohMePVGDVB+7AxPqpFURtqRVSiRmNaqo36h9EY27QabfHxB3LBtlpofURB0jRqLe0fWmjH1/i4o2gs9olaggqCiH/MblzXnbPn7Dm7e87d3yfZ5HIeM79c7m/POTO/OSCEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBAiapd+ByA+pZX5KnByZPcS5+1LvYynSrQy5wN7RnZvcd4u6UUcu/WiE5HaUcDCyL4ngWhCaWWmA/u02ue8XRc55zDgS9lC5K/Al4EDMp73ovN2fcZzsvgxsH9k39uAJJTI5KfAGZF9sTuR7wPnZeznVOBC4LSM510J3JzxHLQys4BdUxw6LmHfWK3M8Sna2Om8/VOauGJKmVBamZ0FNrcFGAGW...TRUNCATED...">
+<div><button class="head-btn" id="topReset">처음부터</button></div>
+</header>
+
+<div class="grid">
+<aside class="panel sticky">
+<h2>작품 설정</h2>
+<p class="desc">외전의 기준이 되는 최소 정보만 입력해 주세요.</p>
+<div class="field"><label>작품명</label><input id="title" placeholder="작품명"></div>
+<div class="field"><label>공 이름</label><input id="gong" placeholder="공 이름"></div>
+<div class="field"><label>수 이름</label><input id="su" placeholder="수 이름"></div>
+<h3>세계관</h3>
+<div class="segment" id="world"><button class="seg active" data-v="modern">현대</button><button class="seg" data-v="fantasy">현대판타지</button></div>
+<div id="subWrap" style="display:none"><h3>현대판타지 유형</h3><div class="chips" id="sub"><button class="chip active" data-v="omegaverse">오메가버스</button><button class="chip" data-v="guideverse">가이드버스</button><button class="chip" data-v="hunter">헌터·길드</button><button class="chip" data-v="beast">수인</button></div></div>
+<h3>현재 관계 단계</h3>
+<select id="relation"><option>썸</option><option>연애 초반</option><option selected>안정된 연애</option><option>반동거</option><option>동거</option><option>결혼</option></select>
+<h3>동거 여부</h3><div class="segment" id="cohabit"><button class="seg active" data-v="no">아니요</button><button class="seg" data-v="yes">예</button></div>
+<h3>공개 연애</h3><div class="segment" id="public"><button class="seg active" data-v="no">비공개</button><button class="seg" data-v="yes">공개</button></div>
+</aside>
+
+<main class="panel">
+<div class="eyebrow">외전 보상 체크</div>
+<h2>본편에서 덜 보여 준 것을 골라 주세요.</h2>
+<p class="desc">‘예’를 고른 항목만 1~5 중요도를 설정할 수 있어요.</p>
+<div class="check-list" id="checkList"></div>
+<div class="actions"><button class="primary" id="generate">외전 뽑기</button><button class="secondary" id="reset">초기화</button></div>
+
+<section class="result" id="result">
+<div class="divider"></div>
+<div class="eyebrow">오늘의 외전</div>
+<div class="result-title" id="resultTitle"></div>
+<div class="tags" id="tags"></div>
+<div class="result-grid" id="resultGrid"></div>
+<div class="actions"><button class="primary" id="again">다시 뽑기</button></div>
+</section>
+</main>
+</div>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>
