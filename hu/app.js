@@ -246,7 +246,7 @@ function analyzeFreeText(text){
   const concepts=new Set();
 
   const rules=[
-    ['workBusy',/출장|당직|야근|교대|밤샘|바쁨|바빠|과로|스케줄|근무 많|일 많|콜 많/],
+    ['workBusy',/출장|당직|야근|교대|밤샘|바쁨|바빠|과로|스케줄|근무 많|일 많|콜 많|시험기간|마감|야간작업|야간 작업|촬영 많|스케줄 빡빡/],
     ['workTogether',/같은 직장|같은 회사|같은 병원|사내|직장 동료|같은 팀|같은 길드|같이 일|업무상 자주/],
     ['workSeparate',/다른 직장|서로 다른 직장|업무 접점 없|직장 다름/],
     ['publicPrivate',/공사 구분|밖에선|밖에서는|남들 앞|직장에선|회사에선|병원에선|공적인 자리/],
@@ -258,14 +258,24 @@ function analyzeFreeText(text){
     ['banControl',/통제|행동 제한|간섭 심|감시|위치 추적|강요/],
     ['banPhone',/휴대폰|핸드폰|폰 검사|메시지 검사|연락처 검사|통화 기록/],
     ['banPublicFight',/공개.*싸|사람들 앞.*싸|직장.*싸|회사.*싸|병원.*싸|공개석상.*싸|언성 높/],
+    ['banNoContact',/잠수|연락 차단|연락 끊|연락두절|차단하고 사라|말없이 사라/],
+    ['banConfinement',/감금|가둬|가두|강제로 못 나가|외출 금지/],
+    ['banWorkInterference',/임무 방해|업무 방해|일 방해|강제 휴식|일 못 하게|임무 못 하게/],
     ['vulnerable',/아픔|아프|취함|취해|불안|피곤|과로|밤샘|당직|울음|우는|약한 모습|부상/],
     ['daily',/일상|데이트|여행|식사|퇴근|귀가|주말|휴일|집안일|장보기|생활/],
     ['future',/결혼|동거|이사|미래|약속|진로|이직|승진|전근|복귀|퇴사|유학/],
-    ['canonPeople',/직원|동료|가족|친구|형|누나|동생|상사|부하|환자|대표|전무|의사|교수/],
+    ['canonPeople',/직원|동료|가족|친구|형|누나|동생|상사|부하|팀장|환자|대표|전무|의사|교수|매니저/],
     ['canonPlace',/병원|회사|집|호텔|학교|길드|센터|별장|출장지|사무실|연수원/],
-    ['canonObject',/반지|넥타이|벨트|선물|편지|사진|휴대폰|열쇠|차|옷|약속|호칭|대사/]
+    ['canonObject',/반지|넥타이|벨트|선물|편지|사진|휴대폰|열쇠|차|옷|약속|호칭|대사|우산|장비|목도리/],
+    ['canonEvent',/회식|시상식|레이드|회의|첫 고백|첫 데이트|가족 식사|촬영|마감/]
   ];
   for(const [name,re] of rules)if(has(re))concepts.add(name);
+
+  // “같은 팀 아님”, “같은 직장 아님”처럼 앞 단어만 보면 반대로 읽히는 메모 보정
+  if(/같은 (팀|직장|회사|병원|길드) (아님|아니|X|x)|서로 다른 (팀|직장|회사|병원|길드)/.test(raw)){
+    concepts.delete('workTogether');
+    concepts.add('workSeparate');
+  }
 
   return {raw,chunks,tokens,concepts};
 }
@@ -288,6 +298,12 @@ function forbiddenConflict(text){
       && /휴대폰|핸드폰|메시지|연락처|통화 기록|폰을 확인/.test(target))return true;
   if(sig.concepts.has('banPublicFight')
       && /(공개|사람들 앞|직장|회사|병원|공식).*(싸우|다투|언성|감정적으로)|언성을 높/.test(target))return true;
+  if(sig.concepts.has('banNoContact')
+      && /잠수|연락.*(끊|차단|두절)|말없이.*사라|연락하지 않/.test(target))return true;
+  if(sig.concepts.has('banConfinement')
+      && /감금|가두|못 나가|외출.*금지|문을 잠그/.test(target))return true;
+  if(sig.concepts.has('banWorkInterference')
+      && /(임무|업무|일).*(방해|못 하게|막)|강제로.*(쉬|휴식)/.test(target))return true;
 
   for(const phrase of entries(rule)){
     const clean=phrase.replace(/\s+/g,' ');
@@ -301,7 +317,7 @@ function settingConflict(item,p){
   const t=String(item.text||'');
   if(p.cohabit==='yes'){
     if(['nonCohabitingOnly','nonCohabitingPreferred'].includes(item.cohabitation))return true;
-    if(/상대의 집|B의 집|A의 집|자기 집에 초대|집 열쇠를 건네|집 열쇠를 준다|같이 살자|동거를 제안|함께 살 집|자기 물건을 하나씩 두|상대 집에 자기 물건/.test(t))return true;
+    if(/상대의 집|B의 집|A의 집|자기 집에 초대|집 열쇠를 건네|집 열쇠를 준다|같이 살자|동거를 제안|함께 살 집|자기 물건을 하나씩 두|상대 집에 자기 물건|집 계약 만료|앞으로 어디서 살지|어디서 살지 정|한쪽의 집 계약/.test(t))return true;
   }
   if(p.cohabit==='no'){
     if(item.cohabitation==='cohabitingOnly')return true;
@@ -592,9 +608,13 @@ function extractedPointLabels(){
   if(sig.canon.concepts.has('canonPeople'))push('본편 인물 재활용');
   if(sig.canon.concepts.has('canonPlace'))push('본편 장소 재활용');
   if(sig.canon.concepts.has('canonObject'))push('본편 오브제·대사 재활용');
+  if(sig.canon.concepts.has('canonEvent'))push('본편 사건 재활용');
   if(sig.forbidden.concepts.has('banControl'))push('통제 행동 제외');
   if(sig.forbidden.concepts.has('banPhone'))push('휴대폰 검사 제외');
   if(sig.forbidden.concepts.has('banPublicFight'))push('공개적인 다툼 제외');
+  if(sig.forbidden.concepts.has('banNoContact'))push('잠수·연락 차단 제외');
+  if(sig.forbidden.concepts.has('banConfinement'))push('감금 행동 제외');
+  if(sig.forbidden.concepts.has('banWorkInterference'))push('업무·임무 방해 제외');
 
   // 분류되지 않은 짧은 메모도 핵심 토큰으로 보조
   if(labels.length<3){
