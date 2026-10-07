@@ -31,7 +31,9 @@ function lockButtonState(){
   if(!b)return;
   b.classList.toggle('active',state.locked);
   b.setAttribute('aria-pressed',String(state.locked));
-  b.textContent=state.locked?'잠금 해제':'설정 잠금';
+  b.textContent=state.locked?'🔒 잠금됨':'🔓 잠금 안 됨';
+  b.setAttribute('aria-label',state.locked?'작품 설정 잠금됨 — 클릭하면 잠금 해제':'작품 설정 잠금 안 됨 — 클릭하면 잠금');
+  b.title=state.locked?'클릭하면 설정 잠금이 해제돼요.':'클릭하면 현재 설정을 저장하고 잠가요.';
 }
 function currentSettings(){
   return {
