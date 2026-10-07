@@ -27,14 +27,14 @@
 /* BL 한끗 UI design system: logo artwork remains unchanged. */
 
 :root{
- --bg:#F7F6F9;--surface:#fff;--text:#292735;--sub:#666273;--muted:#96919F;--line:#E9E6ED;
+ --bg:#f7f5fc;--surface:#fff;--text:#292735;--sub:#666273;--muted:#96919F;--line:#E9E6ED;
  --p:#7048C8;--p2:#815CD1;--p100:#EEE8FA;--p50:#F7F4FC;--pink:#C9507E;--pink50:#FFF5F8;--pink100:#FBE8F0;
  --shadow:0 4px 20px rgba(41,39,53,.04);--font-ui:"Wanted Sans Variable","Wanted Sans","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
  --radius-panel:16px;--radius-card:12px;--radius-button:10px;--radius-icon:8px;
  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;font-weight:500;line-height:1.55}
+body{margin:0;background:radial-gradient(circle at 15% 5%,#f3edff 0,transparent 30%),radial-gradient(circle at 90% 0,#f8efff 0,transparent 27%),var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;font-weight:500;line-height:1.55}
 button,input,select,textarea,code{font-family:inherit}button{font-weight:500;cursor:pointer}
 .shell{max-width:1580px;margin:0 auto;padding:24px 24px 32px}
 header{min-height:80px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:0 0 var(--space-4)}
@@ -217,7 +217,7 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.15</span>
+    <span class="version-badge">v3.16</span>
   </div>
 </footer>
 
