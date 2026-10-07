@@ -85,9 +85,6 @@ function restoreLockedChecklist(){
 
 function currentSettings(){
   return {
-    title:document.getElementById('title')?.value||'',
-    gong:document.getElementById('gong')?.value||'',
-    su:document.getElementById('su')?.value||'',
     world:state.world,
     sub:state.sub,
     relation:document.getElementById('relation')?.value||'안정된 연애',
@@ -105,9 +102,6 @@ function clearLockedSettings(){
 }
 function setSettingsFromSaved(saved){
   if(!saved)return;
-  document.getElementById('title').value=saved.title||'';
-  document.getElementById('gong').value=saved.gong||'';
-  document.getElementById('su').value=saved.su||'';
   document.getElementById('relation').value=saved.relation||'안정된 연애';
   state.world=saved.world||'modern';
   state.sub=saved.sub||'omegaverse';
@@ -500,10 +494,8 @@ function replaceRole(text,token,name){
   });
 }
 function applyNames(text){
-  const gong=document.getElementById('gong').value.trim()||'공';
-  const su=document.getElementById('su').value.trim()||'수';
-  const a=state.roleSwap?su:gong;
-  const b=state.roleSwap?gong:su;
+  const a=state.roleSwap?'수':'공';
+  const b=state.roleSwap?'공':'수';
   return replaceRole(replaceRole(String(text??''),'A',a),'B',b);
 }
 function row(label,text,cls=''){
@@ -534,13 +526,9 @@ async function generate(){
     const parts=chooseSequence(by,core,p);
     addRecent(parts);
     const coreLabel=defs.find(d=>d[0]===core)?.[1]||'관계 보상';
-    const title=document.getElementById('title').value.trim();
-    const gong=document.getElementById('gong').value.trim();
-    const su=document.getElementById('su').value.trim();
-    document.getElementById('resultTitle').textContent=title?`${title} · ${coreLabel} 외전`:`${coreLabel} 중심 외전`;
+    document.getElementById('resultTitle').textContent=`${coreLabel} 중심 외전`;
     const worldLabel=state.world==='modern'?'현대':document.querySelector('#sub .active')?.textContent||'현대판타지';
     const tags=[coreLabel,worldLabel,document.getElementById('relation').value];
-    if(gong&&su)tags.push(`${gong} × ${su}`);
     document.getElementById('tags').innerHTML=tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('');
     const scene=[parts.action1?.text,parts.action2?.text,parts.outsider?.text].filter(Boolean).join(' ');
     const rows=[
@@ -571,9 +559,6 @@ function setSegment(id,value){
 }
 function resetAll(){
   if(!state.locked){
-    document.getElementById('title').value='';
-    document.getElementById('gong').value='';
-    document.getElementById('su').value='';
     document.getElementById('relation').value='안정된 연애';
     state.world='modern'; state.sub='omegaverse'; state.cohabit='no'; state.publicity='no'; state.details.clear();
     setSegment('world','modern'); setSegment('cohabit','no'); setSegment('public','no');
@@ -602,7 +587,6 @@ document.getElementById('settingsLock').addEventListener('click',()=>{
   else clearLockedSettings();
   lockButtonState();
 });
-['title','gong','su'].forEach(id=>document.getElementById(id).addEventListener('input',saveLockedSettings));
 document.getElementById('relation').addEventListener('change',()=>{
   if(document.getElementById('relation').value==='동거'){
     state.cohabit='yes';
