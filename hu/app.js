@@ -22,8 +22,66 @@ const detailDefs={
   beast:[['scentSensitivity','체향·후각'],['partialTraits','귀·꼬리 등 부분 발현'],['territorialInstinct','영역 본능'],['packCulture','무리 문화'],['fullTransform','완전 수인화'],['speciesCustoms','종족 관습']]
 };
 
-const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[]};
+const LOCK_KEY='bl-hankkeut-hu-settings-lock-v1';
+const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[],locked:false};
 defs.forEach(d=>state.checks[d[0]]={enabled:false,priority:3});
+
+function lockButtonState(){
+  const b=document.getElementById('settingsLock');
+  if(!b)return;
+  b.classList.toggle('active',state.locked);
+  b.setAttribute('aria-pressed',String(state.locked));
+  b.textContent=state.locked?'잠금 해제':'설정 잠금';
+}
+function currentSettings(){
+  return {
+    title:document.getElementById('title')?.value||'',
+    gong:document.getElementById('gong')?.value||'',
+    su:document.getElementById('su')?.value||'',
+    world:state.world,
+    sub:state.sub,
+    relation:document.getElementById('relation')?.value||'안정된 연애',
+    cohabit:state.cohabit,
+    publicity:state.publicity,
+    details:[...state.details]
+  };
+}
+function saveLockedSettings(){
+  if(!state.locked)return;
+  try{localStorage.setItem(LOCK_KEY,JSON.stringify(currentSettings()));}catch(e){console.warn('설정 저장 실패',e);}
+}
+function clearLockedSettings(){
+  try{localStorage.removeItem(LOCK_KEY);}catch(e){console.warn('설정 삭제 실패',e);}
+}
+function setSettingsFromSaved(saved){
+  if(!saved)return;
+  document.getElementById('title').value=saved.title||'';
+  document.getElementById('gong').value=saved.gong||'';
+  document.getElementById('su').value=saved.su||'';
+  document.getElementById('relation').value=saved.relation||'안정된 연애';
+  state.world=saved.world||'modern';
+  state.sub=saved.sub||'omegaverse';
+  state.cohabit=saved.cohabit||'no';
+  state.publicity=saved.publicity||'no';
+  setSegment('world',state.world);
+  setSegment('cohabit',state.cohabit);
+  setSegment('public',state.publicity);
+  document.querySelectorAll('#sub button[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===state.sub));
+  document.getElementById('subWrap').style.display=state.world==='fantasy'?'block':'none';
+  renderDetails();
+  state.details=new Set(saved.details||[]);
+  document.querySelectorAll('#details button[data-req]').forEach(b=>b.classList.toggle('active',state.details.has(b.dataset.req)));
+}
+function restoreLockedSettings(){
+  let saved=null;
+  try{
+    const raw=localStorage.getItem(LOCK_KEY);
+    if(raw)saved=JSON.parse(raw);
+  }catch(e){console.warn('설정 불러오기 실패',e);}
+  state.locked=!!saved;
+  if(saved)setSettingsFromSaved(saved);
+  lockButtonState();
+}
 
 async function unpackData(){
   const parts=window.HU_DATA_PARTS||[];
@@ -79,14 +137,15 @@ exclusive('world',v=>{
   state.world=v;
   document.getElementById('subWrap').style.display=v==='fantasy'?'block':'none';
   renderDetails();
+  saveLockedSettings();
 });
-exclusive('cohabit',v=>{state.cohabit=v;});
-exclusive('public',v=>{state.publicity=v;});
+exclusive('cohabit',v=>{state.cohabit=v;saveLockedSettings();});
+exclusive('public',v=>{state.publicity=v;saveLockedSettings();});
 
 document.getElementById('sub').addEventListener('click',function(e){
   const b=e.target.closest('button[data-v]'); if(!b)return;
   this.querySelectorAll('button[data-v]').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active'); state.sub=b.dataset.v; renderDetails();
+  b.classList.add('active'); state.sub=b.dataset.v; renderDetails(); saveLockedSettings();
 });
 
 detailWrap.addEventListener('click',e=>{
@@ -94,6 +153,7 @@ detailWrap.addEventListener('click',e=>{
   const k=b.dataset.req;
   if(state.details.has(k)){state.details.delete(k);b.classList.remove('active');}
   else{state.details.add(k);b.classList.add('active');}
+  saveLockedSettings();
 });
 
 list.addEventListener('click',e=>{
@@ -298,15 +358,18 @@ function setSegment(id,value){
   document.querySelectorAll(`#${id} button[data-v]`).forEach(b=>b.classList.toggle('active',b.dataset.v===value));
 }
 function resetAll(){
-  document.getElementById('title').value='';
-  document.getElementById('gong').value='';
-  document.getElementById('su').value='';
-  document.getElementById('relation').value='안정된 연애';
-  state.world='modern'; state.sub='omegaverse'; state.cohabit='no'; state.publicity='no'; state.details.clear(); state.recent=[];
-  setSegment('world','modern'); setSegment('cohabit','no'); setSegment('public','no');
-  document.querySelectorAll('#sub button[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v==='omegaverse'));
-  document.getElementById('subWrap').style.display='none';
-  detailWrap.style.display='none'; renderDetails(); detailWrap.style.display='none';
+  if(!state.locked){
+    document.getElementById('title').value='';
+    document.getElementById('gong').value='';
+    document.getElementById('su').value='';
+    document.getElementById('relation').value='안정된 연애';
+    state.world='modern'; state.sub='omegaverse'; state.cohabit='no'; state.publicity='no'; state.details.clear();
+    setSegment('world','modern'); setSegment('cohabit','no'); setSegment('public','no');
+    document.querySelectorAll('#sub button[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v==='omegaverse'));
+    document.getElementById('subWrap').style.display='none';
+    detailWrap.style.display='none'; renderDetails(); detailWrap.style.display='none';
+  }
+  state.recent=[];
   Object.keys(state.checks).forEach(k=>state.checks[k]={enabled:false,priority:3});
   document.querySelectorAll('.check-card').forEach(c=>{
     c.classList.remove('enabled');
@@ -316,6 +379,18 @@ function resetAll(){
   });
   document.getElementById('result').classList.remove('show');
 }
+
+document.getElementById('settingsLock').addEventListener('click',()=>{
+  state.locked=!state.locked;
+  if(state.locked)saveLockedSettings();
+  else clearLockedSettings();
+  lockButtonState();
+});
+['title','gong','su'].forEach(id=>document.getElementById(id).addEventListener('input',saveLockedSettings));
+document.getElementById('relation').addEventListener('change',saveLockedSettings);
+renderDetails();
+detailWrap.style.display='none';
+restoreLockedSettings();
 
 document.getElementById('generate').onclick=generate;
 document.getElementById('again').onclick=generate;
