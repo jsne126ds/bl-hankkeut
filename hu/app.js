@@ -11,19 +11,6 @@ const defs=[
   ['stableHappiness','안정된 행복']
 ];
 const rewardKeys=defs.map(d=>d[0]);
-const directionCoreMap={
-  datingReward:'datingReward',
-  dailyLife:'dailyLife',
-  gongAffection:'gongAffection',
-  suAffection:'suAffection',
-  vulnerability:'vulnerability',
-  outsiderView:'outsiderView',
-  relationshipProgress:'relationshipProgress',
-  canonSupplement:'canonSupplement',
-  stableHappiness:'stableHappiness',
-  eventful:'loveIntensity',
-  adult:'datingReward'
-};
 const relationMap={'썸':'earlyDating','연애 초반':'earlyDating','안정된 연애':'stableDating','반동거':'semiCohabiting','동거':'cohabiting','결혼':'married'};
 const stageOrder={earlyDating:0,stableDating:1,semiCohabiting:2,cohabiting:3,married:4};
 const detailDefs={
@@ -38,7 +25,7 @@ const SURVEY_LOCK_KEY='bl-hankkeut-hu-survey-lock-v1';
 const state={
   world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',details:new Set(),recent:[],
   locked:false,surveyLocked:false,affectionDirection:'same',leadDirection:'equal',
-  directions:new Set(),couplePoint:'',forbiddenBehavior:'',canonMaterial:'',roleSwap:false
+  couplePoint:'',forbiddenBehavior:'',canonMaterial:'',roleSwap:false
 };
 
 function lockButtonState(){
@@ -77,7 +64,6 @@ function currentSurvey(){
   return {
     affectionDirection:state.affectionDirection,
     leadDirection:state.leadDirection,
-    directions:[...state.directions],
     couplePoint:state.couplePoint,
     forbiddenBehavior:state.forbiddenBehavior,
     canonMaterial:state.canonMaterial
@@ -119,8 +105,6 @@ function restoreLockedSettings(){
 function applySurveyState(){
   setSegment('affectionDirection',state.affectionDirection);
   setSegment('leadDirection',state.leadDirection);
-  document.querySelectorAll('#directions button[data-v]').forEach(b=>b.classList.toggle('active',state.directions.has(b.dataset.v)));
-  document.getElementById('directionCount').textContent=`${state.directions.size}/3 선택`;
   document.getElementById('couplePoint').value=state.couplePoint;
   document.getElementById('forbiddenBehavior').value=state.forbiddenBehavior;
   document.getElementById('canonMaterial').value=state.canonMaterial;
@@ -132,7 +116,6 @@ function restoreLockedSurvey(){
   if(saved){
     state.affectionDirection=saved.affectionDirection||'same';
     state.leadDirection=saved.leadDirection||'equal';
-    state.directions=new Set((saved.directions||[]).slice(0,3));
     state.couplePoint=saved.couplePoint||'';
     state.forbiddenBehavior=saved.forbiddenBehavior||'';
     state.canonMaterial=saved.canonMaterial||'';
@@ -206,17 +189,6 @@ detailWrap.addEventListener('click',e=>{
   else{state.details.add(k);b.classList.add('active');}
   saveLockedSettings();
 });
-document.getElementById('directions').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-v]');if(!b)return;
-  const k=b.dataset.v;
-  if(state.directions.has(k)){state.directions.delete(k);b.classList.remove('active');}
-  else{
-    if(state.directions.size>=3)return;
-    state.directions.add(k);b.classList.add('active');
-  }
-  document.getElementById('directionCount').textContent=`${state.directions.size}/3 선택`;
-  saveLockedSurvey();
-});
 ['couplePoint','forbiddenBehavior','canonMaterial'].forEach(id=>{
   document.getElementById(id).addEventListener('input',e=>{
     state[id]=e.target.value;
@@ -282,17 +254,52 @@ function hardEligible(item,p){
   if(settingConflict(item,p))return false;
   if(forbiddenConflict(item.text))return false;
   if((item.boundaryRisk||0)>=3)return false;
-  if(state.directions.has('stableHappiness')&&(item.softConflicts||[]).includes('stableHappinessHigh'))return false;
+  if((item.softConflicts||[]).includes('stableHappinessHigh')&&document.getElementById('relation').value==='결혼'&&state.couplePoint.includes('안정'))return false;
   return true;
 }
-function selectedCoreKeys(){
-  const keys=[...state.directions].map(x=>directionCoreMap[x]).filter(Boolean);
-  return [...new Set(keys)];
+function inferredCoreWeights(){
+  const rel=document.getElementById('relation').value;
+  const w={
+    datingReward:3,gongAffection:2,suAffection:2,loveIntensity:2,dailyLife:2,
+    vulnerability:1,outsiderView:1,relationshipProgress:1,canonSupplement:0,stableHappiness:2
+  };
+
+  if(state.affectionDirection==='gong')w.gongAffection+=5;
+  else if(state.affectionDirection==='su')w.suAffection+=5;
+  else{w.gongAffection+=2;w.suAffection+=2;w.loveIntensity+=2;}
+
+  if(state.leadDirection==='gong')w.gongAffection+=2;
+  else if(state.leadDirection==='su')w.suAffection+=2;
+  else w.loveIntensity+=2;
+
+  if(rel==='썸'){w.datingReward+=5;w.loveIntensity+=3;w.vulnerability+=2;}
+  if(rel==='연애 초반'){w.datingReward+=5;w.loveIntensity+=3;w.vulnerability+=2;}
+  if(rel==='안정된 연애'){w.dailyLife+=4;w.stableHappiness+=3;w.datingReward+=2;}
+  if(rel==='반동거'){w.dailyLife+=5;w.stableHappiness+=3;w.relationshipProgress+=2;}
+  if(rel==='동거'){w.dailyLife+=5;w.stableHappiness+=4;w.outsiderView+=2;}
+  if(rel==='결혼'){w.stableHappiness+=6;w.dailyLife+=4;w.outsiderView+=2;}
+
+  const cp=state.couplePoint;
+  const cm=state.canonMaterial;
+  if(/매달|적극|표현/.test(cp)){
+    if(/공/.test(cp))w.gongAffection+=3;
+    if(/수/.test(cp))w.suAffection+=3;
+  }
+  if(/일상|데이트|여행|식사|생활|퇴근|귀가/.test(cp+cm))w.dailyLife+=4;
+  if(/가족|친구|동료|직원|주변|회사|병원/.test(cp+cm))w.outsiderView+=3;
+  if(/아프|취하|불안|피곤|약한|울/.test(cp+cm))w.vulnerability+=4;
+  if(/결혼|동거|이사|미래|약속|진로/.test(cm))w.relationshipProgress+=3;
+  if(cm.trim())w.canonSupplement+=4;
+  return w;
 }
 function coreReward(){
-  const selected=selectedCoreKeys();
-  const source=selected.length?selected:['datingReward','gongAffection','suAffection','loveIntensity','dailyLife','vulnerability','outsiderView','relationshipProgress','stableHappiness'];
-  return source[Math.floor(Math.random()*source.length)];
+  const weights=inferredCoreWeights();
+  const pool=[];
+  for(const [key,value] of Object.entries(weights)){
+    const n=Math.max(0,Math.round(value));
+    for(let i=0;i<n;i++)pool.push(key);
+  }
+  return pool[Math.floor(Math.random()*pool.length)]||'datingReward';
 }
 function textAffinity(item){
   const t=String(item.text||'');
@@ -304,11 +311,7 @@ function textAffinity(item){
   return s;
 }
 function rewardScore(item,core){
-  let s=(item.rewards?.[core]||0)*8;
-  for(const key of selectedCoreKeys())s+=(item.rewards?.[key]||0)*3;
-  if(state.directions.has('eventful'))s+=(item.eventIntensity||0)*2.2;
-  if(state.directions.has('adult')&&item.adultBridge&&item.adultBridge!=='none')s+=6;
-  return s;
+  return (item.rewards?.[core]||0)*10;
 }
 function gradeBonus(g){return ({S:5,A:3,B:1,C:0,D:-2})[g]??0;}
 function rewardSimilarity(a,b){
@@ -346,8 +349,8 @@ function score(item,core,p,pattern,anchor){
   if(p.cohabit==='no'&&item.cohabitation==='nonCohabitingPreferred')s+=4;
   if(p.publicity==='no'&&item.publicity==='secretPreferred')s+=4;
   if(p.publicity==='yes'&&item.publicity==='publicPossible')s+=3;
-  if(state.directions.has('stableHappiness')&&item.relationshipRisk>=3)s-=10;
-  if(state.directions.has('dailyLife')&&item.eventIntensity>=4)s-=7;
+  if(core==='stableHappiness'&&item.relationshipRisk>=3)s-=10;
+  if(core==='dailyLife'&&item.eventIntensity>=4)s-=7;
   if(state.recent.includes(item.recentRepeatKey))s-=10;
   return s;
 }
@@ -378,9 +381,8 @@ function pools(data){
   const by={};for(const x of base)(by[x.pool]||(by[x.pool]=[])).push(x);
   return by;
 }
-function outsiderChance(){
-  if(!state.directions.has('outsiderView'))return 0;
-  return .75;
+function outsiderChance(core){
+  return core==='outsiderView'?.8:0;
 }
 function syntheticCanonAnchor(){
   const material=state.canonMaterial.trim();
@@ -435,7 +437,7 @@ function chooseSequence(by,core,p){
   const firstRank=stageRank[action1?.progressionStage]||2;
   const action2=Math.random()<.3?takeAction(firstRank):null;
   const turn=take('turn');
-  const outsider=payoff?.pool==='outsider'?null:(Math.random()<outsiderChance()?take('outsider'):null);
+  const outsider=payoff?.pool==='outsider'?null:(Math.random()<outsiderChance(core)?take('outsider'):null);
   const ending=take('ending');
   return {start,trigger,action1,action2,turn,outsider,payoff,ending};
 }
@@ -470,14 +472,8 @@ function applyNames(text){
 function row(label,text,cls=''){
   return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(applyNames(text))}</div></div>`;
 }
-function directionLabels(){
-  const map={datingReward:'연애 보상',dailyLife:'일상',gongAffection:'공의 애정',suAffection:'수의 애정',vulnerability:'약한 모습',outsiderView:'주변인 반응',relationshipProgress:'관계 진전',canonSupplement:'본편 보완',stableHappiness:'안정된 행복',eventful:'사건',adult:'성인 장면'};
-  return [...state.directions].map(x=>map[x]).filter(Boolean);
-}
 function rewardExplanation(coreLabel){
-  const picked=directionLabels();
-  if(!picked.length)return `${coreLabel}을 중심으로 현재 관계 설정에 맞는 외전 구성을 뽑았어요.`;
-  return `${picked.join('·')}을 우선해, 입력한 관계 역학과 금지선을 함께 반영했어요.`;
+  return `입력한 관계 단계·관계 역학·작품 고유 정보를 바탕으로 ‘${coreLabel}’ 방향이 잘 맞는 외전으로 골랐어요.`;
 }
 function decideRoleSwap(core){
   if(core==='gongAffection')return false;
@@ -505,10 +501,11 @@ async function generate(){
     const coreLabel=defs.find(d=>d[0]===core)?.[1]||'관계 보상';
     document.getElementById('resultTitle').textContent=`${coreLabel} 중심 외전`;
     const worldLabel=state.world==='modern'?'현대':document.querySelector('#sub .active')?.textContent||'현대판타지';
-    const tags=[coreLabel,worldLabel,document.getElementById('relation').value,...directionLabels().slice(0,3)];
+    const tags=[coreLabel,worldLabel,document.getElementById('relation').value];
     document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">${esc(x)}</span>`).join('');
     const scene=[parts.action1?.text,parts.action2?.text,parts.outsider?.text].filter(Boolean).join(' ');
     const rows=[
+      ['추천 외전 방향',coreLabel,'reward'],
       ['에피소드 한 줄 요약',summary(parts),''],
       ['시작 상황',parts.start?.text||'두 사람이 평범한 시간을 함께 보내기 시작한다.',''],
       ['촉발 사건',parts.trigger?.text||'사소한 계기로 평소와 다른 선택을 하게 된다.',''],
@@ -539,7 +536,7 @@ function resetAll(){
     detailWrap.style.display='none';renderDetails();detailWrap.style.display='none';
   }
   if(!state.surveyLocked){
-    state.affectionDirection='same';state.leadDirection='equal';state.directions.clear();
+    state.affectionDirection='same';state.leadDirection='equal';
     state.couplePoint='';state.forbiddenBehavior='';state.canonMaterial='';
     applySurveyState();
   }
