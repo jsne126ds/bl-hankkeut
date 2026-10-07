@@ -23,7 +23,8 @@ const detailDefs={
 };
 
 const LOCK_KEY='bl-hankkeut-hu-settings-lock-v1';
-const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[],locked:false};
+const CHECKLIST_LOCK_KEY='bl-hankkeut-hu-checklist-lock-v1';
+const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[],locked:false,checklistLocked:false};
 defs.forEach(d=>state.checks[d[0]]={enabled:false,priority:3});
 
 function lockButtonState(){
@@ -35,6 +36,53 @@ function lockButtonState(){
   b.setAttribute('aria-label',state.locked?'작품 설정 잠금됨 — 클릭하면 잠금 해제':'작품 설정 잠금 안 됨 — 클릭하면 잠금');
   b.title=state.locked?'클릭하면 설정 잠금이 해제돼요.':'클릭하면 현재 설정을 저장하고 잠가요.';
 }
+function checklistLockButtonState(){
+  const b=document.getElementById('checklistLock');
+  if(!b)return;
+  b.classList.toggle('active',state.checklistLocked);
+  b.setAttribute('aria-pressed',String(state.checklistLocked));
+  b.textContent=state.checklistLocked?'🔒 잠금됨':'🔓 잠금 안 됨';
+  b.setAttribute('aria-label',state.checklistLocked?'체크리스트 잠금됨 — 클릭하면 잠금 해제':'체크리스트 잠금 안 됨 — 클릭하면 잠금');
+  b.title=state.checklistLocked?'클릭하면 체크리스트 잠금이 해제돼요.':'클릭하면 현재 체크리스트를 저장하고 잠가요.';
+}
+function currentChecklist(){
+  return Object.fromEntries(Object.entries(state.checks).map(([k,v])=>[k,{enabled:!!v.enabled,priority:Number(v.priority)||3}]));
+}
+function saveLockedChecklist(){
+  if(!state.checklistLocked)return;
+  try{localStorage.setItem(CHECKLIST_LOCK_KEY,JSON.stringify(currentChecklist()));}catch(e){console.warn('체크리스트 저장 실패',e);}
+}
+function clearLockedChecklist(){
+  try{localStorage.removeItem(CHECKLIST_LOCK_KEY);}catch(e){console.warn('체크리스트 삭제 실패',e);}
+}
+function applyChecklistState(){
+  document.querySelectorAll('.check-card').forEach(card=>{
+    const key=card.dataset.key;
+    const value=state.checks[key]||{enabled:false,priority:3};
+    card.classList.toggle('enabled',value.enabled);
+    card.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',value.enabled?x.dataset.on==='no':x.dataset.on==='yes'));
+    card.querySelectorAll('.prio').forEach(x=>x.classList.toggle('active',+x.dataset.p===value.priority));
+    const t=card.querySelector('.priority-text');
+    if(t)t.textContent=`${value.priority} · ${labels[value.priority]}`;
+  });
+}
+function restoreLockedChecklist(){
+  let saved=null;
+  try{
+    const raw=localStorage.getItem(CHECKLIST_LOCK_KEY);
+    if(raw)saved=JSON.parse(raw);
+  }catch(e){console.warn('체크리스트 불러오기 실패',e);}
+  state.checklistLocked=!!saved;
+  if(saved){
+    Object.keys(state.checks).forEach(k=>{
+      const v=saved[k];
+      state.checks[k]={enabled:!!v?.enabled,priority:Number(v?.priority)||3};
+    });
+    applyChecklistState();
+  }
+  checklistLockButtonState();
+}
+
 function currentSettings(){
   return {
     title:document.getElementById('title')?.value||'',
@@ -167,6 +215,7 @@ list.addEventListener('click',e=>{
     state.checks[key].enabled=needsMore;
     card.classList.toggle('enabled',needsMore);
     card.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',x===yn));
+    saveLockedChecklist();
     return;
   }
   const p=e.target.closest('.prio');
@@ -175,6 +224,7 @@ list.addEventListener('click',e=>{
     state.checks[key].priority=n;
     card.querySelectorAll('.prio').forEach(x=>x.classList.toggle('active',+x.dataset.p===n));
     card.querySelector('.priority-text').textContent=`${n} · ${labels[n]}`;
+    saveLockedChecklist();
   }
 });
 
@@ -452,15 +502,19 @@ function resetAll(){
     detailWrap.style.display='none'; renderDetails(); detailWrap.style.display='none';
   }
   state.recent=[];
-  Object.keys(state.checks).forEach(k=>state.checks[k]={enabled:false,priority:3});
-  document.querySelectorAll('.check-card').forEach(c=>{
-    c.classList.remove('enabled');
-    c.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',x.dataset.on==='yes'));
-    c.querySelectorAll('.prio').forEach(x=>x.classList.toggle('active',x.dataset.p==='3'));
-    c.querySelector('.priority-text').textContent=`3 · ${labels[3]}`;
-  });
+  if(!state.checklistLocked){
+    Object.keys(state.checks).forEach(k=>state.checks[k]={enabled:false,priority:3});
+    applyChecklistState();
+  }
   document.getElementById('result').classList.remove('show');
 }
+
+document.getElementById('checklistLock').addEventListener('click',()=>{
+  state.checklistLocked=!state.checklistLocked;
+  if(state.checklistLocked)saveLockedChecklist();
+  else clearLockedChecklist();
+  checklistLockButtonState();
+});
 
 document.getElementById('settingsLock').addEventListener('click',()=>{
   state.locked=!state.locked;
@@ -473,6 +527,7 @@ document.getElementById('relation').addEventListener('change',saveLockedSettings
 renderDetails();
 detailWrap.style.display='none';
 restoreLockedSettings();
+restoreLockedChecklist();
 
 document.getElementById('generate').onclick=generate;
 document.getElementById('again').onclick=generate;
