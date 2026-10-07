@@ -194,6 +194,31 @@ function inStage(item,rel){
   return v>=mn&&v<=mx;
 }
 
+function settingConflict(item,p){
+  const t=String(item.text||'');
+  if(p.cohabit==='yes'){
+    if(['nonCohabitingOnly','nonCohabitingPreferred'].includes(item.cohabitation))return true;
+    if(/상대의 집|B의 집|A의 집|자기 집에 초대|집 열쇠를 건네|집 열쇠를 준다|같이 살자|동거를 제안|함께 살 집|자기 물건을 하나씩 두|상대 집에 자기 물건/.test(t))return true;
+  }
+  if(p.cohabit==='no'){
+    if(item.cohabitation==='cohabitingOnly')return true;
+    if(/같이 사는 집|공동생활|둘의 집|우리 집이라고 부른다/.test(t))return true;
+  }
+  if(p.publicity==='yes'){
+    if(item.publicity==='secretPreferred')return true;
+    if(/관계를 숨기|비밀 연애|사귀는 사이냐고 묻|연인이라고 처음 소개|관계를 처음 밝|몰래 만나/.test(t))return true;
+  }
+  if(p.publicity==='no'){
+    if(item.publicity==='publicRequired')return true;
+    if(/공개 연애를 선언|공식 석상에서 연인|관계를 공개적으로 밝/.test(t))return true;
+  }
+  if(p.relation==='married'){
+    if(/사귀자고|연애를 시작|고백을 받아|결혼하자고|프러포즈|동거를 제안|같이 살자/.test(t))return true;
+  }
+  if(['cohabiting','married'].includes(p.relation)&&/처음으로 상대 집에|처음 집에 초대/.test(t))return true;
+  return false;
+}
+
 function hardEligible(item,p){
   if(!inStage(item,p.relation))return false;
   if(item.canon?.requirement==='required')return false;
@@ -212,20 +237,25 @@ function hardEligible(item,p){
 }
 
 function coreReward(){
+  const active=defs.filter(d=>state.checks[d[0]].enabled);
+  const source=active.length?active:defs;
   const pool=[];
-  for(const d of defs){
+  for(const d of source){
     const c=state.checks[d[0]];
-    const w=c.enabled?priorityWeights[c.priority]:1;
+    const w=active.length?priorityWeights[c.priority]:1;
     for(let i=0;i<w;i++)pool.push(d[0]);
   }
   return pool[Math.floor(Math.random()*pool.length)];
 }
 
 function rewardScore(item,core){
-  let s=(item.rewards?.[core]||0)*4;
+  let s=(item.rewards?.[core]||0)*8;
+  const active=defs.filter(d=>state.checks[d[0]].enabled);
   for(const d of defs){
     const c=state.checks[d[0]];
-    if(c.enabled)s+=(item.rewards?.[d[0]]||0)*Math.max(1,c.priority-2)*0.55;
+    const r=item.rewards?.[d[0]]||0;
+    if(c.enabled)s+=r*priorityWeights[c.priority]*0.55;
+    else if(active.length)s-=r*0.7;
   }
   return s;
 }
@@ -245,14 +275,25 @@ function score(item,core,p,pattern){
   return s;
 }
 
-function weightedPick(items,core,p,exclude=new Set(),pattern=null){
-  const eligible=items.filter(x=>!exclude.has(x.id)&&hardEligible(x,p));
+function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=true){
+  let eligible=items.filter(x=>!exclude.has(x.id)&&hardEligible(x,p));
   if(!eligible.length)return null;
+
+  if(strictCore){
+    const coreItems=eligible.filter(x=>(x.rewards?.[core]||0)>0);
+    if(coreItems.length)eligible=coreItems;
+  }
+
+  if(pattern){
+    const samePattern=eligible.filter(x=>x.corePattern===pattern);
+    if(samePattern.length)eligible=samePattern;
+  }
+
   const scored=eligible.map(x=>({x,s:score(x,core,p,pattern)})).sort((a,b)=>b.s-a.s);
-  const top=scored.slice(0,Math.min(20,scored.length));
+  const top=scored.slice(0,Math.min(14,scored.length));
   const min=Math.min(...top.map(v=>v.s));
   let total=0;
-  const rows=top.map(v=>{const w=Math.max(1,Math.round(v.s-min+3));total+=w;return {...v,w};});
+  const rows=top.map(v=>{const w=Math.max(1,Math.round((v.s-min+2)*1.5));total+=w;return {...v,w};});
   let r=Math.random()*total;
   for(const v of rows){r-=v.w;if(r<=0)return v.x;}
   return rows[0].x;
@@ -274,18 +315,23 @@ function outsiderChance(){
 
 function chooseSequence(by,core,p){
   const used=new Set();
-  const payoff=weightedPick(by.payoff||[],core,p,used,null);
+
+  const payoff=weightedPick(by.payoff||[],core,p,used,null,true);
   if(payoff)used.add(payoff.id);
   const pattern=payoff?.corePattern||null;
+
   const take=pool=>{
-    const x=weightedPick(by[pool]||[],core,p,used,pattern);
+    let x=weightedPick(by[pool]||[],core,p,used,pattern,true);
+    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,true);
+    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,false);
     if(x)used.add(x.id);
     return x;
   };
+
   const start=take('start');
   const trigger=take('trigger');
   const action1=take('action');
-  const action2=Math.random()<.55?take('action'):null;
+  const action2=Math.random()<.35?take('action'):null;
   const turn=take('turn');
   const outsider=Math.random()<outsiderChance()?take('outsider'):null;
   const ending=take('ending');
