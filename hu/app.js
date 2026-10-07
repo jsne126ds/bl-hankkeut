@@ -58,7 +58,7 @@ function coreReward(){
 }
 function nameText(t){
   var g=document.getElementById('gong').value.trim()||'공';var s=document.getElementById('su').value.trim()||'수';
-  return t.replace(/공/g,g).replace(/수/g,s);
+  return t.replace(/공(?=$|[\s.,!?·'’”\)\]}]|이|가|은|는|을|를|의|에|에게|보다|과|와|도|만)/g,g).replace(/수(?=$|[\s.,!?·'’”\)\]}]|이|가|은|는|을|를|의|에|에게|보다|과|와|도|만)/g,s);
 }
 function generate(){
   var k=coreReward(), t=templates[k].slice();
@@ -84,4 +84,4 @@ function generate(){
   document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function resetAll(){state.checks&&Object.keys(state.checks).forEach(function(k){state.checks[k]={enabled:false,priority:3};});document.querySelectorAll('.check-card').forEach(function(c){c.classList.remove('enabled');c.querySelectorAll('.yn').forEach(function(x){x.classList.toggle('active',x.dataset.on==='no');});c.querySelectorAll('.prio').forEach(function(x){x.classList.toggle('active',x.dataset.p==='3');});c.querySelector('.priority-text').textContent='3 · '+labels[3];});document.getElementById('result').classList.remove('show');}
-document.getElementById('generate').onclick=generate;document.getElementById('again').onclick=generate;document.getElementById('reset').onclick=resetAll;document.getElementById('topReset').onclick=function(){resetAll();window.scrollTo({top:0,behavior:'smooth'});};
+document.getElementById('generate').onclick=generate;document.getElementById('again').onclick=generate;document.getElementById('reset').onclick=resetAll;
