@@ -24,7 +24,7 @@ const detailDefs={
 
 const LOCK_KEY='bl-hankkeut-hu-settings-lock-v1';
 const CHECKLIST_LOCK_KEY='bl-hankkeut-hu-checklist-lock-v1';
-const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[],locked:false,checklistLocked:false};
+const state={world:'modern',sub:'omegaverse',cohabit:'no',publicity:'no',checks:{},details:new Set(),recent:[],locked:false,checklistLocked:false,roleSwap:false};
 defs.forEach(d=>state.checks[d[0]]={enabled:false,priority:3});
 
 function lockButtonState(){
@@ -274,6 +274,8 @@ function hardEligible(item,p){
   if(item.canon?.requirement==='required')return false;
   if((item.requirements||[]).some(req=>!p.details.has(req)))return false;
   if(settingConflict(item,p))return false;
+  if((item.boundaryRisk||0)>=3)return false;
+  if(state.checks.stableHappiness.enabled&&(item.softConflicts||[]).includes('stableHappinessHigh'))return false;
   return true;
 }
 
@@ -301,9 +303,31 @@ function rewardScore(item,core){
   return s;
 }
 function gradeBonus(g){return ({S:5,A:3,B:1,C:0,D:-2})[g]??0;}
+const rewardKeys=defs.map(d=>d[0]);
+function rewardSimilarity(a,b){
+  if(!a||!b)return 0;
+  let dot=0,aa=0,bb=0;
+  for(const k of rewardKeys){
+    const x=a.rewards?.[k]||0,y=b.rewards?.[k]||0;
+    dot+=x*y; aa+=x*x; bb+=y*y;
+  }
+  return aa&&bb?dot/Math.sqrt(aa*bb):0;
+}
+function overlapCount(a,b){
+  const bs=new Set(b||[]);
+  return (a||[]).filter(x=>bs.has(x)).length;
+}
+function coherenceScore(item,anchor){
+  if(!anchor)return 0;
+  let s=rewardSimilarity(item,anchor)*12;
+  s+=Math.min(2,overlapCount(item.tone,anchor.tone))*1.5;
+  s+=Math.min(2,overlapCount(item.emotions,anchor.emotions))*1.5;
+  s-=Math.abs((item.eventIntensity||1)-(anchor.eventIntensity||1))*1.5;
+  return s;
+}
 
-function score(item,core,p,pattern){
-  let s=rewardScore(item,core)+gradeBonus(item.grade);
+function score(item,core,p,pattern,anchor){
+  let s=rewardScore(item,core)+gradeBonus(item.grade)+coherenceScore(item,anchor);
   if(pattern&&item.corePattern===pattern)s+=8;
   if(state.world==='fantasy'&&item.subWorld?.includes(state.sub))s+=7;
   if(p.cohabit==='yes'&&item.cohabitation==='cohabitingPossible')s+=4;
@@ -316,7 +340,7 @@ function score(item,core,p,pattern){
   return s;
 }
 
-function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=true){
+function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=true,anchor=null){
   let eligible=items.filter(x=>!exclude.has(x.id)&&hardEligible(x,p));
   if(!eligible.length)return null;
 
@@ -330,7 +354,7 @@ function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=tru
     if(samePattern.length)eligible=samePattern;
   }
 
-  const scored=eligible.map(x=>({x,s:score(x,core,p,pattern)})).sort((a,b)=>b.s-a.s);
+  const scored=eligible.map(x=>({x,s:score(x,core,p,pattern,anchor)})).sort((a,b)=>b.s-a.s);
   const top=scored.slice(0,Math.min(14,scored.length));
   const min=Math.min(...top.map(v=>v.s));
   let total=0;
@@ -350,29 +374,40 @@ function pools(data){
 
 function outsiderChance(){
   const c=state.checks.outsiderView;
-  if(!c.enabled)return .1;
-  return ({1:.2,2:.35,3:.45,4:.6,5:.75})[c.priority]||.35;
+  if(!c.enabled)return 0;
+  return ({1:.2,2:.35,3:.5,4:.7,5:.9})[c.priority]||.5;
 }
 
 function chooseSequence(by,core,p){
   const used=new Set();
 
-  const payoff=weightedPick(by.payoff||[],core,p,used,null,true);
+  const payoff=weightedPick(by.payoff||[],core,p,used,null,true,null);
   if(payoff)used.add(payoff.id);
   const pattern=payoff?.corePattern||null;
 
   const take=pool=>{
-    let x=weightedPick(by[pool]||[],core,p,used,pattern,true);
-    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,true);
-    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,false);
+    let x=weightedPick(by[pool]||[],core,p,used,pattern,true,payoff);
+    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,true,payoff);
+    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,false,payoff);
+    if(x)used.add(x.id);
+    return x;
+  };
+
+  const stageRank={suppression:1,action:2,expression:3,admission:4,resolution:5};
+  const takeAction=minRank=>{
+    let candidates=(by.action||[]).filter(x=>(stageRank[x.progressionStage]||2)>=minRank);
+    let x=weightedPick(candidates,core,p,used,pattern,true,payoff);
+    if(!x)x=weightedPick(candidates,core,p,used,null,true,payoff);
+    if(!x)x=weightedPick(candidates,core,p,used,null,false,payoff);
     if(x)used.add(x.id);
     return x;
   };
 
   const start=take('start');
   const trigger=take('trigger');
-  const action1=take('action');
-  const action2=Math.random()<.35?take('action'):null;
+  const action1=takeAction(1);
+  const firstRank=stageRank[action1?.progressionStage]||2;
+  const action2=Math.random()<.3?takeAction(firstRank):null;
   const turn=take('turn');
   const outsider=Math.random()<outsiderChance()?take('outsider'):null;
   const ending=take('ending');
@@ -425,7 +460,9 @@ function replaceRole(text,token,name){
 function applyNames(text){
   const gong=document.getElementById('gong').value.trim()||'공';
   const su=document.getElementById('su').value.trim()||'수';
-  return replaceRole(replaceRole(String(text??''),'A',gong),'B',su);
+  const a=state.roleSwap?su:gong;
+  const b=state.roleSwap?gong:su;
+  return replaceRole(replaceRole(String(text??''),'A',a),'B',b);
 }
 function row(label,text,cls=''){
   return `<div class="result-row ${cls}"><div class="result-label">${esc(label)}</div><div class="result-text">${esc(applyNames(text))}</div></div>`;
@@ -450,6 +487,7 @@ async function generate(){
     const data=await dataPromise;
     const p=profile();
     const core=coreReward();
+    state.roleSwap=core==='suAffection'?true:core==='gongAffection'?false:Math.random()<.5;
     const by=pools(data);
     const parts=chooseSequence(by,core,p);
     addRecent(parts);
@@ -523,7 +561,13 @@ document.getElementById('settingsLock').addEventListener('click',()=>{
   lockButtonState();
 });
 ['title','gong','su'].forEach(id=>document.getElementById(id).addEventListener('input',saveLockedSettings));
-document.getElementById('relation').addEventListener('change',saveLockedSettings);
+document.getElementById('relation').addEventListener('change',()=>{
+  if(document.getElementById('relation').value==='동거'){
+    state.cohabit='yes';
+    setSegment('cohabit','yes');
+  }
+  saveLockedSettings();
+});
 renderDetails();
 detailWrap.style.display='none';
 restoreLockedSettings();
