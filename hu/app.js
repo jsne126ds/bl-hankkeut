@@ -1,17 +1,17 @@
 const defs=[
-  ['datingReward','연애 보상','본편에서 두 사람이 연인이 된 뒤의 모습이 충분히 나오지 않았나요?'],
-  ['gongAffection','공의 애정','공이 먼저 표현하거나 매달리거나 필요로 하는 모습이 부족했나요?'],
-  ['suAffection','수의 애정','수가 먼저 표현하거나 매달리거나 필요로 하는 모습이 부족했나요?'],
-  ['loveIntensity','사랑의 크기','질투·그리움·의존·우선순위처럼 사랑의 크기가 드러나는 장면이 부족했나요?'],
-  ['dailyLife','일상·생활','데이트·휴일·여행·식사·귀가·동거처럼 둘이 함께 생활하는 모습이 부족했나요?'],
-  ['vulnerability','약한 모습','아픔·취함·피로·불안 등 평소보다 약해진 모습을 충분히 보여 주지 않은 인물이 있나요?'],
-  ['outsiderView','주변인 시선','가족·친구·동료 등이 두 사람의 관계를 알거나 바라보는 장면이 부족했나요?'],
-  ['relationshipProgress','관계의 다음 단계','동거·결혼·이사·진로·미래 계획 등 관계가 더 나아갈 여지가 남아 있나요?'],
-  ['canonSupplement','본편 보완','공·수의 다른 시점, 생략된 장면, 미회수 약속·대사·장소처럼 본편에서 덜 보여 준 부분이 있나요?'],
-  ['stableHappiness','안정된 행복','본편의 갈등이 끝난 뒤 두 사람이 편안하고 행복하게 지내는 모습을 충분히 보여 주지 못했나요?']
+  ['datingReward','연애 보상','본편에서 두 사람이 연인이 된 뒤의 모습이 충분히 나왔나요?'],
+  ['gongAffection','공의 애정','공이 먼저 표현하거나 매달리거나 필요로 하는 모습이 충분히 나왔나요?'],
+  ['suAffection','수의 애정','수가 먼저 표현하거나 매달리거나 필요로 하는 모습이 충분히 나왔나요?'],
+  ['loveIntensity','사랑의 크기','질투·그리움·의존·우선순위처럼 사랑의 크기가 드러나는 장면이 충분히 나왔나요?'],
+  ['dailyLife','일상·생활','데이트·휴일·여행·식사·귀가·동거처럼 둘이 함께 생활하는 모습이 충분히 나왔나요?'],
+  ['vulnerability','약한 모습','아픔·취함·피로·불안 등 평소보다 약해진 모습을 충분히 보여 준 인물이 있었나요?'],
+  ['outsiderView','주변인 시선','가족·친구·동료 등이 두 사람의 관계를 알거나 바라보는 장면이 충분히 나왔나요?'],
+  ['relationshipProgress','관계의 다음 단계','동거·결혼·이사·진로·미래 계획 등 관계가 더 나아가는 모습이 충분히 나왔나요?'],
+  ['canonSupplement','본편 보완','공·수의 다른 시점, 생략된 장면, 미회수 약속·대사·장소처럼 본편 보완 요소가 충분히 나왔나요?'],
+  ['stableHappiness','안정된 행복','본편의 갈등이 끝난 뒤 두 사람이 편안하고 행복하게 지내는 모습이 충분히 나왔나요?']
 ];
 
-const labels={1:'굳이 없어도 됨',2:'있으면 좋음',3:'한 번쯤 보고 싶음',4:'외전에서 꽤 중요함',5:'반드시 보여 주고 싶음'};
+const labels={1:'보완하지 않아도 됨',2:'조금 보완하면 좋음',3:'한 번쯤 보완하고 싶음',4:'외전에서 꽤 중요하게 보완하고 싶음',5:'외전에서 꼭 보완하고 싶음'};
 const priorityWeights={1:2,2:3,3:5,4:8,5:12};
 const relationMap={'썸':'earlyDating','연애 초반':'earlyDating','안정된 연애':'stableDating','반동거':'semiCohabiting','동거':'cohabiting','결혼':'married'};
 const stageOrder={earlyDating:0,stableDating:1,semiCohabiting:2,cohabiting:3,married:4};
@@ -43,7 +43,7 @@ defs.forEach((d,i)=>{
   card.dataset.key=d[0];
   let ps='';
   for(let n=1;n<=5;n++) ps+=`<button class="prio ${n===3?'active':''}" data-p="${n}" type="button">${n}</button>`;
-  card.innerHTML=`<div class="question"><strong>${i+1}. ${d[1]}</strong><br>${d[2]}</div><div class="controls"><div class="yesno"><button class="yn active" data-on="no" type="button">아니요</button><button class="yn" data-on="yes" type="button">예</button></div><div class="priority"><div class="prio-wrap">${ps}</div><span class="priority-text">3 · ${labels[3]}</span></div></div>`;
+  card.innerHTML=`<div class="question"><strong>${i+1}. ${d[1]}</strong><br>${d[2]}</div><div class="controls"><div class="yesno"><button class="yn active" data-on="yes" type="button">예</button><button class="yn" data-on="no" type="button">아니요</button></div><div class="priority"><div class="prio-wrap">${ps}</div><span class="priority-text">3 · ${labels[3]}</span></div></div>`;
   list.appendChild(card);
 });
 
@@ -101,10 +101,10 @@ list.addEventListener('click',e=>{
   const key=card.dataset.key;
   const yn=e.target.closest('.yn');
   if(yn){
-    const on=yn.dataset.on==='yes';
-    state.checks[key].enabled=on;
-    card.classList.toggle('enabled',on);
-    card.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',(x.dataset.on==='yes')===on));
+    const needsMore=yn.dataset.on==='no';
+    state.checks[key].enabled=needsMore;
+    card.classList.toggle('enabled',needsMore);
+    card.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',x===yn));
     return;
   }
   const p=e.target.closest('.prio');
@@ -310,7 +310,7 @@ function resetAll(){
   Object.keys(state.checks).forEach(k=>state.checks[k]={enabled:false,priority:3});
   document.querySelectorAll('.check-card').forEach(c=>{
     c.classList.remove('enabled');
-    c.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',x.dataset.on==='no'));
+    c.querySelectorAll('.yn').forEach(x=>x.classList.toggle('active',x.dataset.on==='yes'));
     c.querySelectorAll('.prio').forEach(x=>x.classList.toggle('active',x.dataset.p==='3'));
     c.querySelector('.priority-text').textContent=`3 · ${labels[3]}`;
   });
