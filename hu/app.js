@@ -473,6 +473,31 @@ function score(item,core,p,pattern,anchor){
   if(state.recent.includes(item.recentRepeatKey))s-=10;
   return s;
 }
+function sceneWords(text){
+  return keywords(String(text||''))
+    .map(x=>x.replace(/(으로|에서|에게|부터|까지|처럼|보다|하고|하며|해서|했다|한다|된다|드러난다|보여준다)$/,''))
+    .filter(x=>x.length>=2);
+}
+function sceneSimilarity(a,b){
+  const ta=normalizeFreeText(a).replace(/[.!?]/g,'');
+  const tb=normalizeFreeText(b).replace(/[.!?]/g,'');
+  if(!ta||!tb)return 0;
+  if(ta===tb)return 1;
+  if(ta.length>=12&&tb.length>=12&&(ta.includes(tb)||tb.includes(ta)))return .95;
+
+  const A=new Set(sceneWords(a)), B=new Set(sceneWords(b));
+  if(!A.size||!B.size)return 0;
+  let shared=0;
+  for(const x of A)if(B.has(x))shared++;
+  const overlap=shared/Math.min(A.size,B.size);
+  const union=new Set([...A,...B]).size;
+  const jaccard=union?shared/union:0;
+  return Math.max(overlap*.9,jaccard);
+}
+function nearDuplicate(item,chosen){
+  if(!item?.text)return false;
+  return chosen.some(x=>x?.text&&sceneSimilarity(item.text,x.text)>=.68);
+}
 function weightedPick(items,core,p,exclude=new Set(),pattern=null,strictCore=true,anchor=null){
   let eligible=items.filter(x=>!exclude.has(x.id)&&hardEligible(x,p));
   if(!eligible.length)return null;
@@ -534,23 +559,38 @@ function pickCoreAnchor(by,core,p,used){
 }
 function chooseSequence(by,core,p){
   const used=new Set();
+  const chosen=[];
+
   const payoff=pickCoreAnchor(by,core,p,used);
-  if(payoff)used.add(payoff.id);
+  if(payoff){used.add(payoff.id);chosen.push(payoff);}
   const pattern=payoff?.corePattern||null;
-  const take=pool=>{
-    let x=weightedPick(by[pool]||[],core,p,used,pattern,true,payoff);
-    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,true,payoff);
-    if(!x)x=weightedPick(by[pool]||[],core,p,used,null,false,payoff);
-    if(x)used.add(x.id);return x;
+
+  const uniquePool=items=>{
+    const all=items||[];
+    const filtered=all.filter(x=>!nearDuplicate(x,chosen));
+    return filtered.length?filtered:all;
   };
-  const stageRank={suppression:1,action:2,expression:3,admission:4,resolution:5};
-  const takeAction=minRank=>{
-    const candidates=(by.action||[]).filter(x=>(stageRank[x.progressionStage]||2)>=minRank);
+  const register=x=>{
+    if(x){used.add(x.id);chosen.push(x);}
+    return x;
+  };
+  const take=pool=>{
+    const candidates=uniquePool(by[pool]||[]);
     let x=weightedPick(candidates,core,p,used,pattern,true,payoff);
     if(!x)x=weightedPick(candidates,core,p,used,null,true,payoff);
     if(!x)x=weightedPick(candidates,core,p,used,null,false,payoff);
-    if(x)used.add(x.id);return x;
+    return register(x);
   };
+  const stageRank={suppression:1,action:2,expression:3,admission:4,resolution:5};
+  const takeAction=minRank=>{
+    const base=(by.action||[]).filter(x=>(stageRank[x.progressionStage]||2)>=minRank);
+    const candidates=uniquePool(base);
+    let x=weightedPick(candidates,core,p,used,pattern,true,payoff);
+    if(!x)x=weightedPick(candidates,core,p,used,null,true,payoff);
+    if(!x)x=weightedPick(candidates,core,p,used,null,false,payoff);
+    return register(x);
+  };
+
   const start=take('start');
   const trigger=take('trigger');
   const action1=takeAction(1);
@@ -661,13 +701,11 @@ async function generate(){
     const rows=[
       ['추천 외전 방향',coreLabel,'reward'],
       ...(extracted.length?[['반영한 핵심 포인트',extracted.join(' · '),'']]:[]),
-      ['에피소드 한 줄 요약',summary(parts),''],
       ['시작 상황',parts.start?.text||'두 사람이 평범한 시간을 함께 보내기 시작한다.',''],
       ['촉발 사건',parts.trigger?.text||'사소한 계기로 평소와 다른 선택을 하게 된다.',''],
       ['1차 장면',scene||'두 사람이 서로의 반응을 확인하는 장면이 이어진다.',''],
       ['상황 변화',parts.turn?.text||'감춰 두던 마음이 예상보다 먼저 드러난다.',''],
       ['핵심 장면',parts.payoff?.text||'두 사람이 서로의 마음을 직접 확인한다.','payoff'],
-      ['독자 보상',rewardExplanation(coreLabel),'reward'],
       ['마무리 장면',parts.ending?.text||'둘은 달라진 관계를 자연스럽게 일상 속에 남긴다.','']
     ];
     document.getElementById('resultGrid').innerHTML=rows.map(r=>row(...r)).join('');
