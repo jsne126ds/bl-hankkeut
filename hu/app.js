@@ -1049,7 +1049,6 @@ async function generate(){
       ...(extracted.length?[['반영한 핵심 포인트',extracted.join(' · '),'']]:[]),
       ['사건 축',ep.premise,''],
       ['변수',ep.variable,''],
-      ['작가 선택 지점','이 변수 앞에서 누가 먼저 움직이고 어떻게 대응할지는 캐릭터와 작품 톤에 맞게 선택해 주세요.',''],
       ['전환점',ep.turn,''],
       ['핵심 보상',ep.payoff,'payoff'],
       ['마무리',ep.ending,'']
