@@ -757,7 +757,7 @@ function chooseEpisodeSeed(core,p){
 function episodeFromSeed(seed,core,p){
   const canon=state.canonMaterial.trim();
   const useCanon=canon&&seed.cores?.includes('canonSupplement');
-  const rows={premise:seed.premise,variable:seed.variable,response:seed.response,turn:seed.turn,payoff:seed.payoff,ending:seed.ending};
+  const rows={premise:seed.premise,variable:seed.variable,turn:seed.turn,payoff:seed.payoff,ending:seed.ending};
   if(useCanon){
     rows.premise=`본편에서 남겨 둔 ‘\${canon}’이 다시 등장하면서 현재의 두 사람에게 새로운 의미를 만든다. \${seed.premise}`;
   }
@@ -1049,7 +1049,7 @@ async function generate(){
       ...(extracted.length?[['반영한 핵심 포인트',extracted.join(' · '),'']]:[]),
       ['사건 축',ep.premise,''],
       ['변수',ep.variable,''],
-      ['관계 반응',ep.response,''],
+      ['작가 선택 지점','이 변수 앞에서 누가 먼저 움직이고 어떻게 대응할지는 캐릭터와 작품 톤에 맞게 선택해 주세요.',''],
       ['전환점',ep.turn,''],
       ['핵심 보상',ep.payoff,'payoff'],
       ['마무리',ep.ending,'']
