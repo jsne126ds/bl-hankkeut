@@ -1040,7 +1040,7 @@ async function generate(){
     document.getElementById('resultTitle').textContent=seed.title;
     const worldLabel=state.world==='modern'?'현대':document.querySelector('#sub .active')?.textContent||'현대판타지';
     const tags=[seed.scale,coreLabel,worldLabel,document.getElementById('relation').value];
-    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">\${esc(x)}</span>`).join('');
+    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">${esc(x)}</span>`).join('');
 
     const extracted=extractedPointLabels();
     const rows=[
