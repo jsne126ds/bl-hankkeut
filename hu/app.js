@@ -420,6 +420,350 @@ function textAffinity(item){
 
   return s;
 }
+
+const episodeSeeds=[
+  {
+    id:'trip_disrupted',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['datingReward','dailyLife','gongAffection','suAffection','loveIntensity'],concepts:['workBusy','future'],
+    title:'어렵게 맞춘 일정이 틀어지는 날',
+    premise:'두 사람이 오래 전부터 맞춰 둔 일정이 갑작스러운 업무나 외부 사정으로 흔들린다.',
+    variable:'취소할지 강행할지 결정해야 하는 상황에서, 둘이 중요하게 여기는 기준이 서로 다르다는 게 드러난다.',
+    response:'A는 약속 자체보다 B가 무리하지 않는 쪽을 택하고, B는 그 선택이 단순한 양보가 아니라 둘의 시간을 오래 보고 내린 판단임을 알아차린다.',
+    turn:'일정을 다시 짜는 과정에서 한쪽이 이미 몇 주 뒤까지 둘의 시간을 전제로 움직이고 있었다는 사실이 자연스럽게 드러난다.',
+    payoff:'무산될 뻔한 계획보다 더 중요한 것은, 서로가 상대를 자신의 미래 일정 안에 기본값처럼 넣고 있다는 확인이다.',
+    ending:'완벽한 일정 대신 둘만의 방식으로 바뀐 하루를 보내며 다음 계획을 다시 잡는다.'
+  },
+  {
+    id:'work_crisis_support',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['gongAffection','suAffection','vulnerability','loveIntensity'],concepts:['workBusy','outsider'],
+    title:'일이 무너지는 날 옆에 남는 사람',
+    premise:'한쪽의 업무에서 예상 밖의 문제가 터져 평소의 루틴이 완전히 깨진다.',
+    variable:'도움을 받으면 약해 보일 것 같고, 혼자 버티자니 관계까지 밀어낼 수밖에 없는 상황이 된다.',
+    response:'B가 버티려 할수록 A는 일을 대신 해결하려 들기보다 필요한 선만 지키며 옆에 남는다.',
+    turn:'문제가 정리된 뒤 B는 A가 자신의 능력을 의심한 게 아니라 끝까지 스스로 해결할 수 있도록 자리를 지켜 줬다는 걸 깨닫는다.',
+    payoff:'보호가 대신 해 주는 것이 아니라 무너지지 않도록 곁을 지키는 방식으로 드러난다.',
+    ending:'다음 날 평소처럼 각자 일하러 가지만, 도움을 청해도 관계가 흔들리지 않는다는 신뢰가 남는다.'
+  },
+  {
+    id:'public_event_mask',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','datingReward','loveIntensity'],concepts:['publicPrivate','outsider','workTogether'],
+    title:'사람들 앞에서는 남처럼',
+    premise:'둘이 함께 참석해야 하는 공식적인 자리나 단체 일정이 생긴다.',
+    variable:'평소보다 더 철저하게 선을 지키는 바람에 오히려 주변인이 두 사람 사이의 미묘한 차이를 눈치챈다.',
+    response:'A와 B는 들키지 않으려 할수록 서로의 상태를 너무 정확하게 챙기는 습관을 숨기기 어렵다.',
+    turn:'주변인의 사소한 한마디로 둘만 알고 있던 생활 습관이 밖에서도 고스란히 드러났다는 걸 깨닫는다.',
+    payoff:'관계를 직접 밝히지 않아도 오래된 친밀감은 행동에서 새어 나온다는 장면이 독자 보상이 된다.',
+    ending:'행사가 끝난 뒤 둘만 남자 그제야 서로를 놀리며 긴장을 푼다.'
+  },
+  {
+    id:'family_invitation',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','relationshipProgress','datingReward'],concepts:['outsider','future'],
+    title:'가족 일정에 처음 들어가는 자리',
+    premise:'한쪽에게 가족이나 오래된 지인과 함께하는 중요한 자리가 생기고, 자연스럽게 상대를 데려갈지 결정해야 한다.',
+    variable:'초대 자체보다 어떤 관계로 소개할지가 더 어려운 문제가 된다.',
+    response:'초대받은 쪽은 부담을 줄이려 뒤로 빠지려 하지만, 다른 쪽은 오히려 애매하게 숨기는 것이 더 싫다고 말한다.',
+    turn:'자리에 참석한 뒤 주변인의 반응을 통해 두 사람이 생각한 것보다 이미 서로의 생활 깊숙이 들어와 있었다는 사실이 드러난다.',
+    payoff:'둘의 관계가 사적인 감정에서 서로의 인간관계 안으로 한 단계 확장된다.',
+    ending:'귀가하는 길에 다음에는 누구를 먼저 만나게 될지를 두고 가볍게 이야기한다.'
+  },
+  {
+    id:'career_offer',scale:'관계 전환형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['relationshipProgress','loveIntensity','datingReward'],concepts:['future','workBusy'],
+    title:'좋은 기회가 둘의 거리를 바꿀 때',
+    premise:'한쪽에게 승진·이직·장기 프로젝트처럼 놓치기 어려운 기회가 생긴다.',
+    variable:'기회 자체는 좋지만 생활 패턴이나 물리적 거리가 바뀔 가능성이 있어 혼자 결정하기 어렵다.',
+    response:'상대는 붙잡거나 희생을 요구하지 않고, 먼저 그 선택을 했을 때 둘의 생활이 어떻게 달라질지를 함께 계산한다.',
+    turn:'대화를 이어 가며 두 사람이 이미 중요한 결정을 개인의 문제보다 공동의 문제로 다루고 있다는 점이 드러난다.',
+    payoff:'사랑을 증명하기 위해 기회를 포기하는 대신, 각자의 삶을 유지하면서도 관계를 계속 가져갈 방법을 선택한다.',
+    ending:'결정이 끝난 뒤 둘만의 새 일정과 규칙을 정하며 변화 이후의 생활을 구체화한다.'
+  },
+  {
+    id:'unexpected_free_day',scale:'일상형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['dailyLife','stableHappiness','datingReward'],concepts:['workBusy','daily'],
+    title:'예고 없이 생긴 하루',
+    premise:'바쁜 일정 사이에 우연히 둘 모두에게 비는 시간이 생긴다.',
+    variable:'무언가 특별한 걸 해야 할 것 같지만 막상 하고 싶은 것이 서로 너무 소박하다.',
+    response:'둘은 거창한 계획 대신 평소 미뤄 둔 사소한 일을 같이 처리하며 생활 취향의 차이를 발견한다.',
+    turn:'특별한 데이트보다 같이 장을 보고 늦은 식사를 하는 시간이 더 편하다는 사실을 둘 다 인정하게 된다.',
+    payoff:'연애의 이벤트가 아니라 같이 보내는 평범한 시간이 이미 보상처럼 느껴지는 관계를 보여 준다.',
+    ending:'다음에 또 시간이 비면 뭘 할지 별 의미 없는 목록을 만들어 둔다.'
+  },
+  {
+    id:'anniversary_mismatch',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['datingReward','gongAffection','suAffection','loveIntensity'],concepts:['daily'],
+    title:'기념일을 기억하는 방식이 다를 때',
+    premise:'두 사람이 같은 날을 서로 다른 의미로 기억하고 있었다는 사실이 드러난다.',
+    variable:'한쪽은 아무렇지 않은 척하지만 다른 쪽은 이미 오래전부터 준비해 둔 것이 있다.',
+    response:'준비한 쪽은 서운함을 따지기보다 왜 그 날을 기억했는지 설명하고, 상대는 자신이 몰랐던 관계의 시작점을 알게 된다.',
+    turn:'둘이 중요하게 생각하는 순간이 다르다는 사실이 갈등이 아니라 서로의 기억을 새로 공유하는 계기가 된다.',
+    payoff:'사랑의 크기를 같은 방식으로 증명하지 않아도 된다는 안정감이 남는다.',
+    ending:'결국 둘만 아는 기념일이 하나 더 생긴다.'
+  },
+  {
+    id:'friend_observes',scale:'이벤트형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','datingReward','loveIntensity'],concepts:['outsider'],
+    title:'제삼자가 먼저 알아차리는 변화',
+    premise:'오랜만에 만난 친구나 동료가 둘 중 한 사람의 달라진 습관을 먼저 알아차린다.',
+    variable:'본인은 변한 게 없다고 생각하지만 상대와 관련된 선택만 유독 자연스럽게 바뀌어 있다.',
+    response:'질문을 피하려다 오히려 평소 얼마나 상대를 기준으로 움직이는지가 더 선명해진다.',
+    turn:'당사자보다 주변인이 먼저 “너 요즘 저 사람 기준으로 생각한다”고 짚어 낸다.',
+    payoff:'연애 이후의 변화가 자기 인식이 아니라 타인의 시선을 통해 객관적으로 확인된다.',
+    ending:'집에 돌아온 뒤 그 말을 전할지 말지 고민하다 결국 장난처럼 꺼내 놓는다.'
+  },
+  {
+    id:'sick_day_reversal',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['vulnerability','gongAffection','suAffection','dailyLife'],concepts:['vulnerable','workBusy'],
+    title:'평소 돌보던 쪽이 먼저 쓰러지는 날',
+    premise:'늘 상대를 챙기던 쪽이 예상치 못하게 컨디션을 잃어 역할이 뒤집힌다.',
+    variable:'아픈 사람은 익숙하지 않은 돌봄을 부담스러워하고, 돌보는 사람은 과하게 굴지 않으려 애쓴다.',
+    response:'상대가 필요로 하는 범위만 묻고 움직이면서 평소에는 보이지 않던 생활 습관과 약한 면을 보게 된다.',
+    turn:'아픈 쪽이 무심코 평소에는 절대 하지 않을 부탁을 하고, 둘 다 그 말을 기억하게 된다.',
+    payoff:'누가 더 강한지가 아니라 서로 약해질 수 있는 관계라는 점이 확인된다.',
+    ending:'회복한 뒤 그날의 부탁을 놀림거리로 삼지만, 필요한 물건은 이미 서로의 집에 하나씩 늘어나 있다.'
+  },
+  {
+    id:'home_problem',scale:'사건형',stages:['semiCohabiting','cohabiting','married'],
+    cores:['dailyLife','relationshipProgress','stableHappiness'],concepts:['daily','future'],
+    title:'함께 사는 생활에 문제가 생긴 날',
+    premise:'집의 고장·공사·가구 문제처럼 생활 기반을 건드리는 일이 생긴다.',
+    variable:'문제보다 서로 중요하게 생각하는 생활 기준이 달라 의외의 의견 차이가 생긴다.',
+    response:'누가 맞는지 따지기보다 각자 포기하기 싫은 한 가지를 정하고 그 사이의 해법을 찾는다.',
+    turn:'대화를 하다 보니 지금의 집이 단순한 거주지가 아니라 둘이 계속 같이 살 것을 전제로 꾸려지고 있었다는 점이 드러난다.',
+    payoff:'로맨틱한 약속 대신 생활의 결정을 함께 내리는 모습으로 관계의 안정감이 보인다.',
+    ending:'문제가 해결된 뒤 오히려 집 안에 둘만의 규칙 하나가 새로 생긴다.'
+  },
+  {
+    id:'business_trip_overlap',scale:'사건형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['dailyLife','gongAffection','suAffection','outsiderView'],concepts:['workBusy','workTogether'],
+    title:'업무 일정이 사적인 시간을 침범할 때',
+    premise:'출장·행사·프로젝트 일정 때문에 두 사람의 사적인 약속이 업무와 겹친다.',
+    variable:'같이 있는 시간이 늘어도 업무 때문에 연인처럼 행동할 수는 없다.',
+    response:'공적인 자리에서는 서로 모르는 척하면서도 필요한 순간에만 정확하게 챙겨 주는 방식이 생긴다.',
+    turn:'둘만 남은 짧은 시간에 누적된 피로와 서운함이 터지지만, 싸움보다 다음 일정에 대한 합의로 이어진다.',
+    payoff:'연애와 일을 섞지 않으면서도 관계를 지킬 수 있는 둘만의 방식이 만들어진다.',
+    ending:'업무가 끝난 뒤 짧게라도 둘만의 시간을 확보해 미뤄 둔 약속을 마무리한다.'
+  },
+  {
+    id:'secret_exposed_small',scale:'사건형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','loveIntensity','datingReward'],concepts:['publicPrivate','outsider'],
+    title:'숨기려던 관계가 작은 실수로 새어 나갈 때',
+    premise:'둘만 알고 있어야 할 사소한 정보가 주변인 앞에서 자연스럽게 튀어나온다.',
+    variable:'대놓고 들킨 것은 아니지만 상대를 너무 잘 아는 이유를 설명하기 어려운 상황이 된다.',
+    response:'둘은 즉석에서 말을 맞추지만, 주변인은 오히려 그 호흡 자체를 수상하게 여긴다.',
+    turn:'사건이 지나간 뒤 관계를 계속 숨길지, 일부에게는 알려도 될지 처음으로 현실적인 대화를 하게 된다.',
+    payoff:'비밀을 유지하는 것보다 둘이 같은 선택을 하는지가 더 중요해졌다는 사실이 드러난다.',
+    ending:'결론은 미루더라도 적어도 누구에게 먼저 말할지는 함께 정한다.'
+  },
+  {
+    id:'past_place_return',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['canonSupplement','loveIntensity','datingReward'],concepts:['canonPlace','canonEvent','canonObject'],
+    title:'본편의 장소로 다시 돌아가는 날',
+    premise:'본편에서 의미가 있었던 장소나 사건과 연결된 공간을 우연히 다시 찾게 된다.',
+    variable:'그때는 말하지 못했던 감정과 지금의 관계가 겹치며 같은 장소가 전혀 다르게 느껴진다.',
+    response:'한쪽이 당시 자신이 무엇을 생각했는지 처음으로 말하고, 다른 쪽은 기억하고 있던 장면이 서로 달랐다는 걸 알게 된다.',
+    turn:'본편 당시에는 오해했던 행동 하나가 지금 와서 전혀 다른 의미로 해석된다.',
+    payoff:'새로운 설정을 만들지 않고 기존 장면의 감정적 의미만 확장한다.',
+    ending:'같은 장소에서 이번에는 전과 다른 선택을 하며 장면을 닫는다.'
+  },
+  {
+    id:'gift_returns',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['canonSupplement','gongAffection','suAffection','loveIntensity'],concepts:['canonObject'],
+    title:'예전에 건넨 물건이 다시 등장할 때',
+    premise:'본편에서 주고받았던 물건이나 선물이 예상하지 못한 순간 다시 등장한다.',
+    variable:'건넨 사람은 이미 잊었다고 생각했지만 받은 사람은 계속 사용하거나 간직하고 있었다.',
+    response:'왜 아직 가지고 있느냐는 질문이 과거의 감정과 지금의 관계를 비교하게 만든다.',
+    turn:'물건 자체보다 그것을 버리지 못한 이유가 당시 말하지 못했던 마음과 연결돼 있었음이 드러난다.',
+    payoff:'본편의 작은 오브제가 현재의 애정 확인으로 이어져 캐논을 재활용하는 보상이 생긴다.',
+    ending:'그 물건은 다시 제자리로 돌아가거나 둘만의 새로운 용도로 남는다.'
+  },
+  {
+    id:'promise_due',scale:'관계 전환형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['canonSupplement','relationshipProgress','loveIntensity'],concepts:['canonObject','future'],
+    title:'예전에 한 약속을 지킬 차례',
+    premise:'본편에서 가볍게 넘겼던 약속이나 미뤄 둔 계획을 실제로 실행할 시점이 온다.',
+    variable:'그때와 지금은 상황이 달라져 약속을 그대로 지키는 것이 최선인지 다시 판단해야 한다.',
+    response:'둘은 과거의 말을 의무처럼 따르지 않고, 왜 그 약속을 했는지부터 다시 확인한다.',
+    turn:'약속의 문구보다 서로가 그 말을 기억하고 있었다는 사실 자체가 더 큰 의미가 된다.',
+    payoff:'본편의 미회수 요소를 현재 관계에 맞게 다시 해석하면서 관계의 다음 단계로 연결한다.',
+    ending:'예전 약속을 그대로 지키거나, 둘이 합의한 새로운 약속으로 바꿔 남긴다.'
+  },
+  {
+    id:'guest_stays_over',scale:'이벤트형',stages:['semiCohabiting','cohabiting','married'],
+    cores:['dailyLife','outsiderView','stableHappiness'],concepts:['outsider','daily'],
+    title:'둘의 생활권에 손님이 들어오는 날',
+    premise:'가족이나 친구가 잠시 머물거나 오래 시간을 보내게 되면서 둘만의 생활 리듬이 흔들린다.',
+    variable:'평소에는 의식하지 않던 역할 분담과 습관이 제삼자 앞에서 그대로 드러난다.',
+    response:'둘은 손님을 챙기면서도 자연스럽게 서로의 빈틈을 메워 주고, 주변인은 그 익숙함을 먼저 눈치챈다.',
+    turn:'방문자가 두 사람을 이미 한 가구처럼 대하면서 당사자들이 오히려 그 말을 의식하게 된다.',
+    payoff:'동거·결혼 이후의 안정된 생활이 주변인의 시선을 통해 구체적으로 보인다.',
+    ending:'손님이 돌아간 뒤 다시 둘만 남은 집이 유난히 조용하게 느껴진다.'
+  },
+  {
+    id:'misunderstood_schedule',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['datingReward','loveIntensity','gongAffection','suAffection'],concepts:['workBusy'],
+    title:'약속을 잊은 줄 알았던 날',
+    premise:'한쪽의 연락이 늦어지거나 일정이 꼬여 중요한 약속을 잊은 것처럼 보인다.',
+    variable:'기다린 쪽은 서운하지만 먼저 따지기 싫고, 늦은 쪽은 설명보다 해결을 우선한다.',
+    response:'오해가 풀린 뒤 둘은 누가 더 잘못했는지를 따지는 대신 일정이 꼬였을 때 어떻게 알려 줄지를 정한다.',
+    turn:'늦은 쪽이 사실 약속을 지키기 위해 다른 선택을 이미 해 두었다는 점이 뒤늦게 드러난다.',
+    payoff:'사소한 오해를 큰 갈등으로 키우지 않고 관계의 운영 규칙을 하나 더 만드는 장면이 된다.',
+    ending:'다음 약속에는 서로가 먼저 확인 메시지를 보내기로 하며 가볍게 마무리한다.'
+  },
+  {
+    id:'one_side_jealous',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['gongAffection','suAffection','loveIntensity'],concepts:['outsider'],
+    title:'질투를 숨기려다 더 티 나는 날',
+    premise:'주변인과의 자연스러운 친밀감 때문에 한쪽이 예상보다 크게 질투한다.',
+    variable:'통제하거나 따지고 싶지는 않아 평소처럼 행동하려 하지만 오히려 태도가 어색해진다.',
+    response:'상대는 질투를 문제 삼지 않고 무엇이 불편했는지를 먼저 묻고, 질투한 쪽은 감정을 인정하되 상대의 행동을 제한하지 않는다.',
+    turn:'질투의 대상보다 자신이 상대에게 얼마나 확신을 받고 싶었는지가 더 중요한 문제였다는 걸 깨닫는다.',
+    payoff:'소유가 아니라 확인을 요청하는 방식으로 질투를 처리하면서 관계의 안정감이 강화된다.',
+    ending:'둘만의 사소한 신호나 표현 하나를 정해 비슷한 상황에서 쓰기로 한다.'
+  },
+  {
+    id:'planned_surprise_fails',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['gongAffection','suAffection','datingReward'],concepts:['daily','outsider'],
+    title:'준비한 이벤트가 계획대로 되지 않을 때',
+    premise:'한쪽이 몰래 준비한 작은 이벤트나 선물이 예상치 못한 변수 때문에 망가질 위기에 놓인다.',
+    variable:'숨기려 할수록 이상한 행동만 늘어나 상대가 오해하기 쉬운 상황이 된다.',
+    response:'결국 계획이 들키지만 준비한 쪽의 서툰 과정 자체가 더 큰 애정 표현으로 남는다.',
+    turn:'받는 쪽은 결과물보다 자신을 위해 얼마나 오래 준비했는지를 알게 된다.',
+    payoff:'완벽한 이벤트가 아니라 실패한 준비 과정이 둘의 관계를 더 잘 보여 준다.',
+    ending:'원래 계획과는 다른 방식으로 둘만의 기념을 남긴다.'
+  },
+  {
+    id:'temporary_distance',scale:'관계 전환형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['loveIntensity','relationshipProgress','dailyLife'],concepts:['future','workBusy','workSeparate'],
+    title:'잠시 떨어져 지내야 할 때',
+    premise:'업무·학업·가족 사정 때문에 일정 기간 떨어져 지내야 할 가능성이 생긴다.',
+    variable:'거리 자체보다 지금까지 당연하게 누리던 생활이 사라지는 것이 더 크게 느껴진다.',
+    response:'둘은 막연히 괜찮을 거라고 넘기지 않고 연락 빈도, 만날 일정, 혼자 감당하지 않을 문제를 구체적으로 정한다.',
+    turn:'준비 과정에서 서로가 어떤 순간에 가장 상대를 필요로 하는지가 처음으로 명확해진다.',
+    payoff:'헤어짐의 불안보다 관계를 유지하기 위해 실제로 무엇을 할지 합의하는 장면이 중심이 된다.',
+    ending:'떠나는 날보다 이미 정해 둔 다음 만남의 날짜를 확인하며 마무리한다.'
+  },
+  {
+    id:'unexpected_recognition',scale:'사건형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','loveIntensity','datingReward'],concepts:['outsider','publicPrivate'],
+    title:'관계를 모르는 사람이 둘을 연인처럼 볼 때',
+    premise:'처음 보는 제삼자가 둘의 관계를 자연스럽게 연인으로 오해한다.',
+    variable:'둘은 부정해야 할지 그냥 넘겨야 할지 순간적으로 판단이 엇갈린다.',
+    response:'짧은 대응 뒤 각자 왜 그렇게 반응했는지 이야기하면서 공개 여부에 대한 온도 차이가 드러난다.',
+    turn:'정작 관계를 아는 주변인보다 아무 정보 없는 사람이 더 쉽게 둘을 알아봤다는 점이 우습고도 신경 쓰인다.',
+    payoff:'외부의 시선을 통해 둘의 친밀감이 얼마나 자연스럽게 드러나는지 확인된다.',
+    ending:'다음부터는 비슷한 상황에서 어떻게 말할지 둘만의 답을 정한다.'
+  },
+  {
+    id:'shared_responsibility',scale:'사건형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['relationshipProgress','dailyLife','loveIntensity'],concepts:['future','daily'],
+    title:'둘이 함께 책임져야 할 일이 생길 때',
+    premise:'집·공동 일정·중요한 물건처럼 둘이 함께 책임져야 하는 문제가 생긴다.',
+    variable:'한쪽이 알아서 해결하려 하면서 역할이 한쪽으로 쏠리기 시작한다.',
+    response:'상대는 도와주겠다는 말보다 무엇을 나눠 맡을지 구체적으로 제안한다.',
+    turn:'책임을 나누는 방식에서 서로가 장기적으로 어떤 생활을 원하는지가 자연스럽게 드러난다.',
+    payoff:'관계의 미래가 추상적인 약속이 아니라 실제 생활 운영으로 확인된다.',
+    ending:'일이 끝난 뒤 다음부터 적용할 둘만의 역할 분담이 생긴다.'
+  },
+  {
+    id:'old_conflict_echo',scale:'사건형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['canonSupplement','stableHappiness','loveIntensity'],concepts:['canonEvent'],
+    title:'본편 갈등과 닮은 상황을 다시 만날 때',
+    premise:'본편에서 크게 흔들렸던 사건과 비슷한 상황이 훨씬 작은 규모로 다시 찾아온다.',
+    variable:'예전 같으면 오해했을 장면이지만 지금은 서로의 패턴을 이미 알고 있다.',
+    response:'둘은 과거와 같은 실수를 반복하지 않고, 당시에는 하지 못했던 질문을 바로 꺼낸다.',
+    turn:'같은 종류의 사건을 전혀 다른 방식으로 넘기면서 두 사람 모두 관계가 실제로 달라졌음을 체감한다.',
+    payoff:'본편 갈등을 재탕하지 않고 성장한 관계를 대비해서 보여 주는 보상이 생긴다.',
+    ending:'예전이라면 며칠 걸렸을 문제를 그날 안에 끝내고 평범한 일상으로 돌아간다.'
+  },
+  {
+    id:'fantasy_system_change',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['relationshipProgress','loveIntensity','outsiderView'],concepts:['future'],worlds:['fantasy'],
+    title:'세계관 제도가 둘의 관계에 개입할 때',
+    premise:'형질·매칭·길드·등급·종족 규칙처럼 세계관의 제도 하나가 두 사람의 생활에 직접 영향을 준다.',
+    variable:'개인 감정과 별개로 공식 절차나 선택을 요구받으면서 관계를 어디까지 제도 안에 올릴지 결정해야 한다.',
+    response:'둘은 제도에 끌려가기보다 자신들에게 필요한 부분과 거부할 부분을 분리해 선택한다.',
+    turn:'공식적으로는 단순한 절차였던 선택이 둘 사이에서는 예상보다 큰 의미를 갖게 된다.',
+    payoff:'세계관 설정이 장식이 아니라 관계의 다음 단계를 실제로 움직이는 사건이 된다.',
+    ending:'절차가 끝난 뒤 둘만의 의미를 따로 부여하며 관계를 다시 정의한다.'
+  },
+  {
+    id:'fantasy_emergency',scale:'사건형',stages:['earlyDating','stableDating','semiCohabiting','cohabiting','married'],
+    cores:['vulnerability','gongAffection','suAffection','loveIntensity'],concepts:['vulnerable','workBusy'],worlds:['fantasy'],
+    title:'능력이나 형질 때문에 예상 밖의 위기가 생길 때',
+    premise:'능력·형질·감각·임무 같은 세계관 요소 때문에 한쪽에게 갑작스러운 이상 상황이 발생한다.',
+    variable:'평소에는 통제 가능했던 문제가 상대 앞에서만 예외적으로 드러난다.',
+    response:'상대는 해결사처럼 모든 걸 대신하지 않고, 본인이 통제권을 되찾을 수 있도록 필요한 선택지를 함께 정한다.',
+    turn:'위기가 끝난 뒤 둘 사이에서만 가능한 신호나 대처 방식이 하나 생긴다.',
+    payoff:'판타지 설정이 두 사람의 약점과 신뢰를 동시에 보여 주는 관계 장치가 된다.',
+    ending:'다음에 같은 일이 생기면 어떻게 할지 둘만의 규칙을 정하며 끝낸다.'
+  },
+  {
+    id:'fantasy_public_mission',scale:'이벤트형',stages:['stableDating','semiCohabiting','cohabiting','married'],
+    cores:['outsiderView','datingReward','loveIntensity'],concepts:['outsider','publicPrivate','workTogether'],worlds:['fantasy'],
+    title:'공적인 임무에서 관계를 숨겨야 할 때',
+    premise:'둘이 같은 임무·행사·조직 일정에 참여하지만 사적인 관계는 드러낼 수 없는 상황이 된다.',
+    variable:'서로를 특별 취급하지 않으려다 오히려 반응을 지나치게 의식하게 된다.',
+    response:'둘은 공식적인 역할을 지키면서도 상대의 상태를 확인할 최소한의 신호를 정한다.',
+    turn:'주변인이 그 신호를 우연히 알아차리면서 관계가 들킬 뻔한 순간이 생긴다.',
+    payoff:'세계관의 공적 시스템과 사적인 관계가 충돌하면서 긴장감 있는 연애 보상이 생긴다.',
+    ending:'임무가 끝난 뒤 공식적인 태도를 풀고 둘만의 방식으로 긴장을 해소한다.'
+  }
+];
+
+const scaleBonus={일상형:0,이벤트형:4,사건형:6,'관계 전환형':7};
+function seedText(seed){
+  return [seed.title,seed.premise,seed.variable,seed.response,seed.turn,seed.payoff,seed.ending].join(' ');
+}
+function seedEligible(seed,core,p){
+  const stage=p.relation;
+  if(seed.stages&&!seed.stages.includes(stage))return false;
+  if(seed.worlds&&seed.worlds.includes('fantasy')&&state.world!=='fantasy')return false;
+  if(forbiddenConflict(seedText(seed)))return false;
+  if(p.cohabit==='yes'&&/동거를 제안|같이 살자|처음으로 상대 집|집 열쇠를 건네/.test(seedText(seed)))return false;
+  if(p.publicity==='yes'&&/관계를 숨기|비밀을 유지|들킬 뻔/.test(seedText(seed)))return false;
+  return true;
+}
+function seedConceptScore(seed){
+  const sig=subjectiveSignals();
+  const concepts=new Set([...sig.job.concepts,...sig.couple.concepts,...sig.canon.concepts]);
+  let s=0;
+  for(const c of seed.concepts||[])if(concepts.has(c))s+=5;
+  const tokens=[...sig.job.tokens,...sig.couple.tokens,...sig.canon.tokens];
+  const text=seedText(seed);
+  s+=Math.min(5,tokens.filter(t=>text.includes(t)).length)*1.5;
+  return s;
+}
+function chooseEpisodeSeed(core,p){
+  let candidates=episodeSeeds.filter(x=>seedEligible(x,core,p));
+  if(!candidates.length)candidates=episodeSeeds.filter(x=>!x.worlds||!x.worlds.includes('fantasy'));
+  const recentIds=new Set(state.recent.slice(-12));
+  const rows=candidates.map(seed=>{
+    let s=scaleBonus[seed.scale]||0;
+    if(seed.cores?.includes(core))s+=14;
+    else if(seed.cores?.some(k=>(k==='loveIntensity'&&['gongAffection','suAffection','datingReward'].includes(core))))s+=4;
+    s+=seedConceptScore(seed);
+    if(recentIds.has('seed:'+seed.id))s-=18;
+    if(seed.scale==='일상형'&&state.recent.slice(-6).some(x=>x==='scale:일상형'))s-=6;
+    return {seed,s};
+  }).sort((a,b)=>b.s-a.s);
+  const top=rows.slice(0,Math.min(10,rows.length));
+  const min=Math.min(...top.map(x=>x.s));
+  let total=0;
+  const weighted=top.map(x=>{const w=Math.max(1,Math.round(x.s-min+2));total+=w;return {...x,w};});
+  let r=Math.random()*total;
+  for(const x of weighted){r-=x.w;if(r<=0)return x.seed;}
+  return weighted[0]?.seed||candidates[0];
+}
+function episodeFromSeed(seed,core,p){
+  const canon=state.canonMaterial.trim();
+  const useCanon=canon&&seed.cores?.includes('canonSupplement');
+  const rows={premise:seed.premise,variable:seed.variable,response:seed.response,turn:seed.turn,payoff:seed.payoff,ending:seed.ending};
+  if(useCanon){
+    rows.premise=\`본편에서 남겨 둔 ‘\${canon}’이 다시 등장하면서 현재의 두 사람에게 새로운 의미를 만든다. \${seed.premise}\`;
+  }
+  return rows;
+}
+
 function rewardScore(item,core){
   return (item.rewards?.[core]||0)*10;
 }
@@ -684,38 +1028,42 @@ async function generate(){
   const main=document.getElementById('generate');
   const old=main.textContent;main.textContent='외전 구성 중…';
   try{
-    const data=await dataPromise;
     const p=profile();
     const core=coreReward();
     state.roleSwap=decideRoleSwap(core);
-    const by=pools(data);
-    const parts=chooseSequence(by,core,p);
-    addRecent(parts);
+    const seed=chooseEpisodeSeed(core,p);
+    const ep=episodeFromSeed(seed,core,p);
+    state.recent.push('seed:'+seed.id,'scale:'+seed.scale);
+    state.recent=state.recent.slice(-30);
+
     const coreLabel=defs.find(d=>d[0]===core)?.[1]||'관계 보상';
-    document.getElementById('resultTitle').textContent=`${coreLabel} 중심 외전`;
+    document.getElementById('resultTitle').textContent=seed.title;
     const worldLabel=state.world==='modern'?'현대':document.querySelector('#sub .active')?.textContent||'현대판타지';
-    const tags=[coreLabel,worldLabel,document.getElementById('relation').value];
-    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">${esc(x)}</span>`).join('');
-    const scene=[parts.action1?.text,parts.action2?.text,parts.outsider?.text].filter(Boolean).join(' ');
+    const tags=[seed.scale,coreLabel,worldLabel,document.getElementById('relation').value];
+    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>\`<span class="tag">\${esc(x)}</span>\`).join('');
+
     const extracted=extractedPointLabels();
     const rows=[
+      ['에피소드 규모',seed.scale,'reward'],
       ['추천 외전 방향',coreLabel,'reward'],
       ...(extracted.length?[['반영한 핵심 포인트',extracted.join(' · '),'']]:[]),
-      ['시작 상황',parts.start?.text||'두 사람이 평범한 시간을 함께 보내기 시작한다.',''],
-      ['촉발 사건',parts.trigger?.text||'사소한 계기로 평소와 다른 선택을 하게 된다.',''],
-      ['1차 장면',scene||'두 사람이 서로의 반응을 확인하는 장면이 이어진다.',''],
-      ['상황 변화',parts.turn?.text||'감춰 두던 마음이 예상보다 먼저 드러난다.',''],
-      ['핵심 장면',parts.payoff?.text||'두 사람이 서로의 마음을 직접 확인한다.','payoff'],
-      ['마무리 장면',parts.ending?.text||'둘은 달라진 관계를 자연스럽게 일상 속에 남긴다.','']
+      ['사건 축',ep.premise,''],
+      ['변수',ep.variable,''],
+      ['관계 반응',ep.response,''],
+      ['전환점',ep.turn,''],
+      ['핵심 보상',ep.payoff,'payoff'],
+      ['마무리',ep.ending,'']
     ];
     document.getElementById('resultGrid').innerHTML=rows.map(r=>row(...r)).join('');
     const result=document.getElementById('result');
     result.classList.add('show');
     result.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(err){
-    console.error(err);alert(`외전을 만드는 중 문제가 생겼어요. ${err.message}`);
+    console.error(err);
+    alert(\`외전을 만드는 중 문제가 생겼어요. \${err.message}\`);
   }finally{
-    buttons.forEach(b=>{if(b)b.disabled=false;});main.textContent=old;
+    buttons.forEach(b=>{if(b)b.disabled=false;});
+    main.textContent=old;
   }
 }
 
