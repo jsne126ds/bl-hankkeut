@@ -759,7 +759,7 @@ function episodeFromSeed(seed,core,p){
   const useCanon=canon&&seed.cores?.includes('canonSupplement');
   const rows={premise:seed.premise,variable:seed.variable,response:seed.response,turn:seed.turn,payoff:seed.payoff,ending:seed.ending};
   if(useCanon){
-    rows.premise=\`본편에서 남겨 둔 ‘\${canon}’이 다시 등장하면서 현재의 두 사람에게 새로운 의미를 만든다. \${seed.premise}\`;
+    rows.premise=`본편에서 남겨 둔 ‘\${canon}’이 다시 등장하면서 현재의 두 사람에게 새로운 의미를 만든다. \${seed.premise}`;
   }
   return rows;
 }
@@ -1040,7 +1040,7 @@ async function generate(){
     document.getElementById('resultTitle').textContent=seed.title;
     const worldLabel=state.world==='modern'?'현대':document.querySelector('#sub .active')?.textContent||'현대판타지';
     const tags=[seed.scale,coreLabel,worldLabel,document.getElementById('relation').value];
-    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>\`<span class="tag">\${esc(x)}</span>\`).join('');
+    document.getElementById('tags').innerHTML=[...new Set(tags)].map(x=>`<span class="tag">\${esc(x)}</span>`).join('');
 
     const extracted=extractedPointLabels();
     const rows=[
@@ -1060,7 +1060,7 @@ async function generate(){
     result.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(err){
     console.error(err);
-    alert(\`외전을 만드는 중 문제가 생겼어요. \${err.message}\`);
+    alert(`외전을 만드는 중 문제가 생겼어요. \${err.message}`);
   }finally{
     buttons.forEach(b=>{if(b)b.disabled=false;});
     main.textContent=old;
