@@ -217,7 +217,7 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.26</span>
+    <span class="version-badge">v3.27</span>
   </div>
 </footer>
 
@@ -867,10 +867,10 @@ function rerollOnly(f){
 function toggleLock(f){locks[f]=!locks[f];renderLocks();if(f==='situation')showToast(locks[f]?'상황을 고정했어요.':'상황 고정을 해제했어요.')}
 function renderLocks(){const map={background:'lockBackground',relationship:'lockRelationship',setting:'lockSetting',situation:'lockSituation',variable:'lockVariable',themes:'lockThemes',object:'lockObject'};for(const [f,id] of Object.entries(map)){$(id).textContent=locks[f]?'🔒':'🔓';$(id).classList.toggle('locked',locks[f])}const pin=$('situationPinBtn');if(pin){pin.innerHTML=locks.situation?'🔓 &nbsp; 상황 고정 해제':'🔒 &nbsp; 상황 고정';pin.setAttribute('aria-pressed',locks.situation?'true':'false')}}
 function render(){$('vBackground').textContent=backgroundLabel(current.background)+(current.overlay?' · '+current.overlay.name:'');$('vRelationship').textContent=(current.relationship.display_name||current.relationship.name);$('vSetting').textContent=current.setting?.text||'';$('vSituation').textContent=current.situation.text;$('vVariable').textContent=current.variable.text;$('vThemes').innerHTML=(current.themes||[]).map(x=>`<span class="adult-pill">${x.name}</span>`).join('');$('vObject').textContent=current.object.name;$('topTags').innerHTML=`<span class="tag">#${current.background.category.replace('·','')}</span>${current.overlay?`<span class="tag">#${current.overlay.name}</span>`:''}`;renderLocks();updateSaveButton()}
-function backgroundLabel(bg){return D.base_backgrounds.find(x=>x.id===bg?.id)?.display_name||bg?.display_name||bg?.name||''}
+function backgroundLabel(bg,rel=current.relationship){if([16,74].includes(bg?.id)&&rel?.name==='형사 × 용의자')return '경찰서 취조실';return D.base_backgrounds.find(x=>x.id===bg?.id)?.display_name||bg?.display_name||bg?.name||''}
 function relationshipLabel(r){return r?.relationship?.display_name||r?.relationship?.name||''}
 function resultText(r=current){return `[BL 한끗]
-배경: ${backgroundLabel(r.background)}${r.overlay?' · '+r.overlay.name:''}
+배경: ${backgroundLabel(r.background,r.relationship)}${r.overlay?' · '+r.overlay.name:''}
 관계: ${relationshipLabel(r)}
 설정: ${r.setting?.text||''}
 상황: ${r.situation.text}
@@ -879,13 +879,13 @@ function resultText(r=current){return `[BL 한끗]
 오브제: ${r.object.name}`}
 function cloneResult(r=current){return JSON.parse(JSON.stringify(r))}
 function pushRecent(){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');arr.unshift(cloneResult());arr=arr.slice(0,8);localStorage.setItem('blh_recent',JSON.stringify(arr));renderRecent()}
-function renderRecent(){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');$('recentList').innerHTML=arr.slice(0,3).map((r,i)=>`<div class="recent-item" onclick="loadRecent(${i})"><b>${backgroundLabel(r.background)} · ${relationshipLabel(r)}</b><p>${r.situation.text}</p></div>`).join('')||'<div class="tiny">아직 결과가 없어요.</div>'}
+function renderRecent(){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');$('recentList').innerHTML=arr.slice(0,3).map((r,i)=>`<div class="recent-item" onclick="loadRecent(${i})"><b>${backgroundLabel(r.background,r.relationship)} · ${relationshipLabel(r)}</b><p>${r.situation.text}</p></div>`).join('')||'<div class="tiny">아직 결과가 없어요.</div>'}
 function loadRecent(i){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');if(arr[i]){current=arr[i];render();showToast('최근 결과를 불러왔어요.')}}
 function resultKey(r=current){return JSON.stringify([r.background?.id,r.overlay?.id||null,r.relationship?.id,relationshipLabel(r),r.setting?.id,r.situation?.id,r.variable?.id,(r.themes||[]).map(x=>x.id).sort(),r.object?.id])}
 function updateSaveButton(){const btn=$('saveBtn');if(!btn||!current.background)return;const arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const saved=arr.some(r=>resultKey(r)===resultKey(current));btn.classList.toggle('saved',saved);btn.textContent=saved?'♥ 저장됨':'♡ 저장하기';btn.setAttribute('aria-pressed',saved?'true':'false')}
 function saveCurrent(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const key=resultKey(current);const idx=arr.findIndex(r=>resultKey(r)===key);if(idx>=0){arr.splice(idx,1);localStorage.setItem('blh_saved',JSON.stringify(arr));updateSaveButton();showToast('저장을 해제했어요.')}else{arr.unshift(cloneResult());localStorage.setItem('blh_saved',JSON.stringify(arr.slice(0,100)));updateSaveButton();showToast('소재를 저장했어요.')}}
 function openSaved(){$('savedModal').classList.add('show');renderSaved()} function closeSaved(){$('savedModal').classList.remove('show')}
-function renderSaved(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');$('savedList').innerHTML=arr.length?arr.map((r,i)=>`<div class="saved-item"><div class="tiny">${backgroundLabel(r.background)}${r.overlay?' · '+r.overlay.name:''} · ${relationshipLabel(r)}</div><div class="s">${r.situation.text}</div><div class="saved-actions"><button class="mini" onclick="useSaved(${i})">불러오기</button><button class="mini" onclick="deleteSaved(${i})">삭제</button></div></div>`).join(''):'<div class="desc">저장한 소재가 아직 없어요.</div>'}
+function renderSaved(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');$('savedList').innerHTML=arr.length?arr.map((r,i)=>`<div class="saved-item"><div class="tiny">${backgroundLabel(r.background,r.relationship)}${r.overlay?' · '+r.overlay.name:''} · ${relationshipLabel(r)}</div><div class="s">${r.situation.text}</div><div class="saved-actions"><button class="mini" onclick="useSaved(${i})">불러오기</button><button class="mini" onclick="deleteSaved(${i})">삭제</button></div></div>`).join(''):'<div class="desc">저장한 소재가 아직 없어요.</div>'}
 function useSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');current=arr[i];render();closeSaved();showToast('저장한 소재를 불러왔어요.')} function deleteSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');arr.splice(i,1);localStorage.setItem('blh_saved',JSON.stringify(arr));renderSaved();updateSaveButton()}
 async function copyCurrent(){try{await navigator.clipboard.writeText(resultText());showToast('결과를 복사했어요.')}catch(e){const t=document.createElement('textarea');t.value=resultText();document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast('결과를 복사했어요.')}}
 function openPreferences(){
