@@ -217,7 +217,7 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.27</span>
+    <span class="version-badge">v3.28</span>
   </div>
 </footer>
 
@@ -512,8 +512,22 @@ industryRelMap['녹음실']=industryRelMap['공연장'];
 industryRelMap['연습실']=industryRelMap['공연장'];
 industryRelMap['헬스장']=['트레이너 × 회원','개인 트레이너 × 운동선수'];
 industryRelMap['호텔']=['호텔리어 × 장기 투숙객'];
+const commonJobPlaces=new Set(['자취방','공동주택','본가','호텔','펜션·숙소','바','클럽','SM 바·클럽','카페','공유주택','고급 주상복합','별장·세컨드하우스','온천·스파','프라이빗 라운지','국내 여행지','해외 여행지','휴양지 리조트','장기 출장 숙소','캠핑장·글램핑','온천 료칸']);
+industryRelMap['바']=['바텐더 × 단골'];
+industryRelMap['공항']=['기장 × 부기장','파일럿 × 승무원','승무원 × 승무원'];
+industryRelMap['차 안']=['운전기사 × 고용주','경호원 × 보호대상','연예인 × 경호원'];
+function jobPlaceCompatible(bg,r){
+  if(commonJobPlaces.has(bg.name))return true;
+  if(r.category==='직장·업무')return bg.category==='회사·업무'||['게임 개발사','IT 회사','투자회사','증권사','출판사','언론사','연구소'].includes(bg.name);
+  if(r.category!=='직업 밀착')return true;
+  if(['경호원 × 보호대상','보안요원 × VIP 고객'].includes(r.name))return bg.category!=='판타지'&&bg.category!=='학교·교육'&&!['비행기 안','기차 안'].includes(bg.name);
+  if(r.name==='의뢰인 × 전문가')return ['법률사무소','디자인 작업실','조직·암흑가','공유 오피스'].includes(bg.name);
+  return (industryRelMap[bg.name]||[]).includes(r.name);
+}
+
 const enclosedTravel=new Set(['비행기 안','기차 안','차 안']);
 function backgroundRelationCompatible(bg,r){
+  if(!jobPlaceCompatible(bg,r))return false;
   if(bg.category==='학교·교육'&&r.category==='직업 밀착')return false;
   if(r.name==='대리운전 기사 × 승객')return bg.name==='차 안';
   if(r.name==='옆자리 장거리 승객')return ['비행기 안','기차 안','크루즈·선박'].includes(bg.name);
@@ -605,7 +619,7 @@ const fantasyRelAffinity={
 if(fantasyRelAffinity[r.name]){
   if(!fantasyRelAffinity[r.name].includes(bg.name))return 0;
   w*=3.2;
-}if(selectedRel.size&&mode==='direct'&&!selectedRel.has(relationshipFilterCategory(r)))return 0;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'||Object.prototype.hasOwnProperty.call(industryRelMap,bg.name)){const mapped=Object.prototype.hasOwnProperty.call(industryRelMap,bg.name);const allowed=industryRelMap[bg.name]||[];if(mapped&&!allowed.includes(r.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
+}if(selectedRel.size&&mode==='direct'&&!selectedRel.has(relationshipFilterCategory(r)))return 0;if(locks.background&&current.overlay){const req=requiredOverlayForRelation(r);if(req&&req!==current.overlay.name)return 0}else if(locks.background&&!current.overlay&&requiredOverlayForRelation(r))return 0;if(r.category==='직장·업무'&&bg.category==='회사·업무')w*=2.3;if(r.category==='직업 밀착'){if(bg.category==='직업·산업'||Object.prototype.hasOwnProperty.call(industryRelMap,bg.name)){const mapped=Object.prototype.hasOwnProperty.call(industryRelMap,bg.name);const allowed=industryRelMap[bg.name]||[];if(mapped&&!allowed.includes(r.name)&&!commonJobPlaces.has(bg.name))return 0;w*=allowed.includes(r.name)?3.2:.35}else if(bg.category==='판타지')return 0;else w*=.35}if(bg.category==='판타지'&&r.category==='직장·업무'&&!['고용주 × 고용인','고용주 × 개인비서','멘토 × 멘티'].includes(r.name))return 0;if(r.category==='과거 학교 인연'&&['현대·생활','회사·업무','직업·산업'].includes(bg.category))w*=1.7;if(r.category==='낯선·익명'&&bg.category==='현대·생활')w*=1.5;if(['황제·왕 × 신하','귀족 × 사용인','주군 × 기사'].includes(r.name)){if(bg.category==='판타지')w*=4;if(['회사·업무','학교·교육'].includes(bg.category))return 0}if(r.category==='직장·업무'&&bg.category==='학교·교육'&&r.name!=='멘토 × 멘티')return 0;return w}
 function sitWeight(s,bg,rel){if(!semanticSituationCompatible(s,bg,rel))return 0;if(!backgroundTextCompatible(bg,s.text))return 0;let w=1;const requiredWorld=requiredOverlayForSituation(s);const relationWorld=requiredOverlayForRelation(rel);if(!preferences.tentacle&&['촉수','비인간 신체'].some(k=>s.text.includes(k)))return 0;if(relationWorld&&requiredWorld&&relationWorld!==requiredWorld)return 0;if(requiredWorld&&!overlayAllowed(requiredWorld))return 0;if(locks.background){const req=requiredOverlayForSituation(s);const fixed=current.overlay?.name||null;if(req&&req!==fixed)return 0}const workContext=bg.category==='회사·업무'||bg.category==='직업·산업'||rel.category==='직장·업무'||rel.category==='직업 밀착';if(s.category==='업무'&&!workContext)return 0;if(s.category==='업무'&&rel.category==='직장·업무')w*=1.8;if(s.category==='재회'&&rel.category==='과거 인연')w*=1.8;if(s.category==='경쟁·평가'&&rel.category==='적대·경쟁')w*=1.6;if(s.category==='동거·생활'&&rel.category==='기존 친분')w*=1.5;if(s.category==='권력·신분'&&['직장·업무','세계관·특수'].includes(rel.category))w*=1.35;if(s.category==='도망·추적'&&['과거 인연','적대·경쟁'].includes(rel.category))w*=1.3;if(bg.category==='판타지'&&s.id===322)return 0;if(bg.category==='판타지'&&[
   '회사','야근','신입사원','직장','사내','출근','퇴근','출장',
   'SNS','소셜미디어','휴대폰','메신저','메시지','채팅','온라인','앱','방송','스트리밍','콘텐츠','라이브 방송',
