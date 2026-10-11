@@ -217,7 +217,7 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.24</span>
+    <span class="version-badge">v3.25</span>
   </div>
 </footer>
 
@@ -560,6 +560,8 @@ function semanticSettingCompatible(setting,bg,rel){
   return true;
 }
 function semanticVariableCompatible(v,bg,rel){
+  // 오래된 짝사랑·상호 호감은 기존 친분이나 과거 인연이 있는 관계에서만.
+  if([16,17].includes(v.id)&&!['기존 친분','과거 인연','과거 학교 인연'].includes(rel.category))return false;
   if(classicFantasy(bg)&&[33,137,167].includes(v.id))return false;
   if([185,196].includes(v.id)&&!pastRomanticRelations.has(rel.name))return false;
   if(v.id===191&&![106,212,347].includes(current.situation?.id))return false;
