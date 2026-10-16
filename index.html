@@ -162,6 +162,11 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
  .grid{grid-template-columns:minmax(0,1fr)}.right{grid-template-columns:repeat(2,minmax(0,1fr))}
  .quote{display:none}.guide-modal{padding:24px}.row{grid-template-columns:24px 68px minmax(0,1fr) 36px}
 }
+.recent-all{border:0;background:transparent;font:inherit;font-size:11px;color:var(--sub);cursor:pointer;padding:4px 8px;border-radius:8px}
+.result-details{margin:12px 0;border-top:1px solid var(--line);padding-top:8px}
+.result-details summary{cursor:pointer;font-size:12px;color:var(--sub);padding:4px 0}
+.result-details dl{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;margin:12px 0;font-size:13px;line-height:1.6}
+.result-details dt{color:var(--sub)}.result-details dd{margin:0;overflow-wrap:anywhere;white-space:pre-line}
 </style>
 </head>
 <body>
@@ -202,7 +207,7 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
 <button class="action" onclick="copyCurrent()">▣ &nbsp; 결과 복사</button>
 <button class="action" onclick="resetAll()">♲ &nbsp; 초기화</button>
 <div class="tip"><div style="font-size:22px">💡</div><div><b>이용 팁</b>마음에 드는 항목은 잠그고,<br>나머지만 다시 뽑아보세요.</div></div>
-<div class="recent"><div class="recent-head"><span>◷ 최근 결과</span><span class="tiny">전체보기 ›</span></div><div id="recentList"></div></div>
+<div class="recent"><div class="recent-head"><span>◷ 최근 결과</span><button type="button" class="tiny recent-all" onclick="openRecent()">전체보기 ›</button></div><div id="recentList"></div></div>
 </aside>
 </div>
 </div>
@@ -217,11 +222,12 @@ button:focus-visible,.head-link:focus-visible,.brand:focus-visible{outline:3px s
   </div>
   <div class="footer-right">
     <button type="button" onclick="showHelp()">이용 안내</button>
-    <span class="version-badge">v3.30</span>
+    <span class="version-badge">v3.31</span>
   </div>
 </footer>
 
-<div class="modal-back" id="savedModal" role="dialog" aria-modal="true" aria-labelledby="savedTitle" onclick="if(event.target===this)closeSaved()"><div class="modal"><button class="close" onclick="closeSaved()">×</button><h2 id="savedTitle">저장한 소재</h2><p class="desc">브라우저에 저장된 소재예요.</p><div id="savedList"></div></div></div>
+<div class="modal-back" id="recentModal" role="dialog" aria-modal="true" aria-labelledby="recentTitle" onclick="if(event.target===this)closeDialog('recentModal')"><div class="modal"><button type="button" class="close" onclick="closeDialog('recentModal')" aria-label="최근 결과 닫기">×</button><h2 id="recentTitle">최근 결과</h2><p class="desc">최근 생성한 소재 8개를 확인할 수 있어요.</p><div id="recentAllList"></div></div></div>
+<div class="modal-back" id="savedModal" role="dialog" aria-modal="true" aria-labelledby="savedTitle" onclick="if(event.target===this)closeSaved()"><div class="modal"><button class="close" onclick="closeSaved()" aria-label="저장한 소재 닫기">×</button><h2 id="savedTitle">저장한 소재</h2><p class="desc">브라우저에 저장된 소재예요.</p><div id="savedList"></div></div></div>
 <div class="modal-back" id="prefModal" role="dialog" aria-modal="true" aria-labelledby="prefTitle" onclick="if(event.target===this)closePreferences()">
   <div class="modal pref-modal">
     <button class="close" onclick="closePreferences()" aria-label="환경 설정 닫기">×</button>
@@ -352,11 +358,11 @@ function setMode(m){
   $('modeDirect').classList.toggle('active',m==='direct');
   $('directOptions').style.opacity=m==='direct'?1:.55;
   $('directOptions').style.pointerEvents=m==='direct'?'auto':'none';
-  if(m==='direct'&&current.background){
-    fullGenerate(true);
-  }
+  $('directOptions').inert=m!=='direct';
+  if(current.background)showToast('뽑기 방식을 바꿨어요. 현재 결과는 유지돼요.');
 }
 function toggleFilter(type,key){
+  const previous={world:new Set(selectedWorld),bg:new Set(selectedBg),rel:new Set(selectedRel)};
   let s=type==='world'?selectedWorld:type==='bg'?selectedBg:selectedRel;
 
   if(type!=='rel'){
@@ -376,8 +382,9 @@ function toggleFilter(type,key){
   initFilters();
 
   // 옵션 직접 선택 모드에서는 선택 즉시 현재 결과에 반영한다.
-  if(mode==='direct'){
-    fullGenerate(true);
+  if(mode==='direct'&&!fullGenerate(true)){
+    selectedWorld=previous.world;selectedBg=previous.bg;selectedRel=previous.rel;initFilters();
+    showToast('잠금이나 다른 선택 조건과 맞지 않아 선택을 되돌렸어요. 잠금을 풀거나 조건을 바꿔 주세요.');
   }
 }
 function toggleDetail(){const detail=$('detail');const isOpen=detail.classList.toggle('open');$('detailArrow').textContent=isOpen?'⌃':'⌄';$('detailToggle').setAttribute('aria-expanded',String(isOpen))}
@@ -399,7 +406,7 @@ function filterBackgrounds(){
       b==='회사'?x.category==='회사·업무':
       b==='school'?x.category==='학교·교육':
       b==='현대·생활'?x.category==='현대·생활':
-      b==='연예계'?x.name==='연예계':
+      b==='연예계'?['연예계','방송 스튜디오','광고·촬영 현장','녹음실','연습실','공연장'].includes(x.name):
       b==='병원'?x.name==='병원':
       b==='fantasycourt'?['황궁','귀족 저택','동양 황궁','왕도·수도','영지·성'].includes(x.name):
       false
@@ -828,6 +835,7 @@ function realizeRelationship(rel){
 function resultCompatible(){
   const c=current;
   if(!c.background||!c.relationship||!c.setting||!c.situation||!c.variable||!c.object||c.themes?.length!==2||!c.themes.every(Boolean))return false;
+  if(mode==='direct'&&(!filterBackgrounds().some(bg=>bg.id===c.background.id)||(c.overlay&&!overlayAllowed(c.overlay.name))||(selectedOverlayNames()?.length&&!c.overlay)))return false;
   if(relWeight(c.relationship,c.background)<=0||sitWeight(c.situation,c.background,c.relationship)<=0)return false;
   const needed=[requiredOverlayForRelation(c.relationship),requiredOverlayForSituation(c.situation),c.setting.required_overlay].filter(Boolean);
   if(needed.some(name=>c.overlay?.name!==name))return false;
@@ -879,7 +887,7 @@ function rerollOnly(f){
   current=previous;showToast('다른 항목과 맞는 조합이 없어요. 조건이나 잠금을 하나 풀어주세요.');return false;
 }
 function toggleLock(f){locks[f]=!locks[f];renderLocks();if(f==='situation')showToast(locks[f]?'상황을 고정했어요.':'상황 고정을 해제했어요.')}
-function renderLocks(){const map={background:'lockBackground',relationship:'lockRelationship',setting:'lockSetting',situation:'lockSituation',variable:'lockVariable',themes:'lockThemes',object:'lockObject'};for(const [f,id] of Object.entries(map)){$(id).textContent=locks[f]?'🔒':'🔓';$(id).classList.toggle('locked',locks[f])}const pin=$('situationPinBtn');if(pin){pin.innerHTML=locks.situation?'🔓 &nbsp; 상황 고정 해제':'🔒 &nbsp; 상황 고정';pin.setAttribute('aria-pressed',locks.situation?'true':'false')}}
+function renderLocks(){const map={background:'lockBackground',relationship:'lockRelationship',setting:'lockSetting',situation:'lockSituation',variable:'lockVariable',themes:'lockThemes',object:'lockObject'};for(const [f,id] of Object.entries(map)){$(id).textContent=locks[f]?'🔒':'🔓';$(id).classList.toggle('locked',locks[f]);const label={background:'배경',relationship:'관계',setting:'설정',situation:'상황',variable:'변수',themes:'19금 키워드',object:'오브제'}[f];$(id).setAttribute('aria-label',label+(locks[f]?' 고정 해제':' 고정'));$(id).setAttribute('aria-pressed',String(!!locks[f]));$(id).title=label+(locks[f]?' 고정 해제':' 고정')}const pin=$('situationPinBtn');if(pin){pin.innerHTML=locks.situation?'🔓 &nbsp; 상황 고정 해제':'🔒 &nbsp; 상황 고정';pin.setAttribute('aria-pressed',locks.situation?'true':'false')}}
 function render(){$('vBackground').textContent=backgroundLabel(current.background)+(current.overlay?' · '+current.overlay.name:'');$('vRelationship').textContent=relationshipName(current.relationship);$('vSetting').textContent=current.setting?.text||'';$('vSituation').textContent=current.situation.text;$('vVariable').textContent=current.variable.text;$('vThemes').innerHTML=(current.themes||[]).map(x=>`<span class="adult-pill">${x.name}</span>`).join('');$('vObject').textContent=current.object.name;$('topTags').innerHTML=`<span class="tag">#${current.background.category.replace('·','')}</span>${current.overlay?`<span class="tag">#${current.overlay.name}</span>`:''}`;renderLocks();updateSaveButton()}
 function backgroundLabel(bg,rel=current.relationship){if([16,74].includes(bg?.id)&&rel?.name==='형사 × 용의자')return '경찰서 취조실';return D.base_backgrounds.find(x=>x.id===bg?.id)?.display_name||bg?.display_name||bg?.name||''}
 function relationshipName(rel){if(!rel)return '';const name=D.relationships.find(x=>x.id===rel.id)?.display_name||rel.name||'';const parts=splitRelationName(name);return rel.flipped&&parts?`${parts[1]} × ${parts[0]}`:name}
@@ -899,8 +907,18 @@ function loadRecent(i){let arr=JSON.parse(localStorage.getItem('blh_recent')||'[
 function resultKey(r=current){return JSON.stringify([r.background?.id,r.overlay?.id||null,r.relationship?.id,relationshipLabel(r),r.setting?.id,r.situation?.id,r.variable?.id,(r.themes||[]).map(x=>x.id).sort(),r.object?.id])}
 function updateSaveButton(){const btn=$('saveBtn');if(!btn||!current.background)return;const arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const saved=arr.some(r=>resultKey(r)===resultKey(current));btn.classList.toggle('saved',saved);btn.textContent=saved?'♥ 저장됨':'♡ 저장하기';btn.setAttribute('aria-pressed',saved?'true':'false')}
 function saveCurrent(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');const key=resultKey(current);const idx=arr.findIndex(r=>resultKey(r)===key);if(idx>=0){arr.splice(idx,1);localStorage.setItem('blh_saved',JSON.stringify(arr));updateSaveButton();showToast('저장을 해제했어요.')}else{arr.unshift(cloneResult());localStorage.setItem('blh_saved',JSON.stringify(arr.slice(0,100)));updateSaveButton();showToast('소재를 저장했어요.')}}
-function openSaved(){$('savedModal').classList.add('show');renderSaved()} function closeSaved(){$('savedModal').classList.remove('show')}
-function renderSaved(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');$('savedList').innerHTML=arr.length?arr.map((r,i)=>`<div class="saved-item"><div class="tiny">${backgroundLabel(r.background,r.relationship)}${r.overlay?' · '+r.overlay.name:''} · ${relationshipLabel(r)}</div><div class="s">${r.situation.text}</div><div class="saved-actions"><button class="mini" onclick="useSaved(${i})">불러오기</button><button class="mini" onclick="deleteSaved(${i})">삭제</button></div></div>`).join(''):'<div class="desc">저장한 소재가 아직 없어요.</div>'}
+function openSaved(){renderSaved();openDialog('savedModal')} function closeSaved(){closeDialog('savedModal')}
+function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function resultDetails(r){
+  const fields=[['배경',backgroundLabel(r.background,r.relationship)+(r.overlay?' · '+r.overlay.name:'')],['관계',relationshipLabel(r)],['설정',r.setting?.text||''],['상황',r.situation?.text||''],['변수',r.variable?.text||''],['19금 키워드',(r.themes||[]).map(x=>x.name).join(' · ')],['오브제',r.object?.name||'']];
+  return '<details class="result-details"><summary>전체 내용 보기</summary><dl>'+fields.map(([k,v])=>'<dt>'+k+'</dt><dd>'+escapeHTML(v)+'</dd>').join('')+'</dl></details>';
+}
+function openRecent(){
+  const arr=JSON.parse(localStorage.getItem('blh_recent')||'[]');
+  $('recentAllList').innerHTML=arr.map((r,i)=>'<div class="saved-item"><div class="tiny">'+escapeHTML(backgroundLabel(r.background,r.relationship)+' · '+relationshipLabel(r))+'</div><div class="s">'+escapeHTML(r.situation.text)+'</div>'+resultDetails(r)+'<button type="button" class="mini" onclick="loadRecent('+i+');closeDialog(\'recentModal\')">불러오기</button></div>').join('')||'<p class="desc">아직 결과가 없어요.</p>';
+  openDialog('recentModal');
+}
+function renderSaved(){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');$('savedList').innerHTML=arr.length?arr.map((r,i)=>`<div class="saved-item"><div class="tiny">${backgroundLabel(r.background,r.relationship)}${r.overlay?' · '+r.overlay.name:''} · ${relationshipLabel(r)}</div><div class="s">${r.situation.text}</div>${resultDetails(r)}<div class="saved-actions"><button class="mini" onclick="useSaved(${i})">불러오기</button><button class="mini" onclick="deleteSaved(${i})">삭제</button></div></div>`).join(''):'<div class="desc">저장한 소재가 아직 없어요.</div>'}
 function useSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');current=arr[i];render();closeSaved();showToast('저장한 소재를 불러왔어요.')} function deleteSaved(i){let arr=JSON.parse(localStorage.getItem('blh_saved')||'[]');arr.splice(i,1);localStorage.setItem('blh_saved',JSON.stringify(arr));renderSaved();updateSaveButton()}
 async function copyCurrent(){try{await navigator.clipboard.writeText(resultText());showToast('결과를 복사했어요.')}catch(e){const t=document.createElement('textarea');t.value=resultText();document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast('결과를 복사했어요.')}}
 function openPreferences(){
@@ -909,10 +927,9 @@ function openPreferences(){
   $('prefTentacle').checked=preferences.tentacle;
   $('prefAutoWorld').checked=preferences.autoWorld;
   syncPreferenceUI();
-  $('prefModal').classList.add('show');
-  document.body.style.overflow='hidden';
+  openDialog('prefModal');
 }
-function closePreferences(){$('prefModal').classList.remove('show');document.body.style.overflow=''}
+function closePreferences(){closeDialog('prefModal')}
 function syncPreferenceUI(){
   const enabled=$('prefNonhuman').checked;
   $('prefTentacle').disabled=!enabled;
@@ -940,10 +957,35 @@ function resetPreferences(){
 }
 function resetAll(){locks={background:false,relationship:false,setting:false,situation:false,variable:false,themes:false,object:false};selectedWorld=new Set(['전체']);selectedBg=new Set(['전체']);selectedRel=new Set();setMode('random');initFilters();fullGenerate(false);showToast('초기화했어요.')}
 function showToast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1700)}
-function showHelp(){$('helpModal').classList.add('show');document.body.style.overflow='hidden'}
-function closeHelp(){$('helpModal').classList.remove('show');document.body.style.overflow=''}
+function showHelp(){openDialog('helpModal')}
+function closeHelp(){closeDialog('helpModal')}
+let activeDialog=null,dialogTrigger=null;
+function openDialog(id){
+  if(activeDialog)closeDialog(activeDialog);
+  dialogTrigger=document.activeElement;activeDialog=id;
+  $(id).classList.add('show');document.body.style.overflow='hidden';
+  document.querySelector('.shell').inert=true;document.querySelector('.site-footer').inert=true;
+  $(id).querySelector('button,input,summary,[tabindex="0"]')?.focus();
+}
+function closeDialog(id){
+  $(id).classList.remove('show');
+  if(activeDialog!==id)return;
+  activeDialog=null;document.body.style.overflow='';
+  document.querySelector('.shell').inert=false;document.querySelector('.site-footer').inert=false;
+  dialogTrigger?.focus();dialogTrigger=null;
+}
 today();initFilters();fullGenerate(false);renderRecent();
 $('prefNonhuman').addEventListener('change',syncPreferenceUI);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHelp();closeSaved();closePreferences();}});
+document.addEventListener('keydown',e=>{
+  if(!activeDialog)return;
+  if(e.key==='Escape'){e.preventDefault();closeDialog(activeDialog);return}
+  if(e.key!=='Tab')return;
+  const nodes=[...$(activeDialog).querySelectorAll('button,input,summary,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
+  if(!nodes.length){e.preventDefault();return}
+  const first=nodes[0],last=nodes[nodes.length-1];
+  if(e.shiftKey&&(document.activeElement===first||!$(activeDialog).contains(document.activeElement))){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&(document.activeElement===last||!$(activeDialog).contains(document.activeElement))){e.preventDefault();first.focus()}
+});
+$('directOptions').inert=mode!=='direct';
 </script>
 </body></html>
